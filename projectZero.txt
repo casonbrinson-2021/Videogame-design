@@ -1,0 +1,113 @@
+//created by Gregory Cason Brinson
+//last edited on 8/28/20
+//ECE 4525 Project 0
+//Letters Drawn: 'C' and 'B'
+//Fruits Used: Banana and Oranges that are cut in half
+
+
+
+
+//function for creating the firstInitial Object
+var firstInitialObj = function(x, y, speed) {
+    this.x = x;
+    this.y = y;
+    this.speed = speed;
+};
+
+//function that defines how the firstInitial Objext will be displayed
+firstInitialObj.prototype.display = function() {
+    //goes by top right of brown top of banana
+    //banana 'C'
+    noStroke();
+    fill(255, 215, 0);
+    
+    quad(this.x-140,this.y+50,this.x-120,this.y+25,this.x-120,this.y+160,this.x-140,this.y+160);
+    quad(this.x-140,this.y+160,this.x-120,this.y+160,this.x-80,this.y+205,this.x-100,this.y+205);
+    
+    fill(139,69,19);
+    
+    quad(this.x-70,this.y+195,this.x-60,this.y+190,this.x-55,this.y+200,this.x-80,this.y+205);
+    quad(this.x-110,this.y+15,this.x-100,this.y+10,this.x-95,this.y+20,this.x-120,this.y+25);
+    
+
+};
+
+//function that defines how the firstInitial Object will move
+firstInitialObj.prototype.move = function() {
+    this.y += this.speed;
+
+    if(this.y < 55) {
+        this.speed = this.speed*-1;
+    }
+    if(this.y > 115) {
+        this.speed = this.speed*-1;
+    }
+    
+    
+};
+
+
+
+//function that creates the secondInitial Object
+var secondInitialObj = function(x, y, speed) {
+    this.x = x;
+    this.y = y;
+    this.speed = speed;
+};
+
+//funciton that defines how to display the secondInitial Object
+secondInitialObj.prototype.display = function() {
+    //goes by top of green ellipse
+    //oranges 'B'
+    noStroke();
+    fill(255, 144, 0);
+    arc(this.x+60,this.y-135,100,100,-90,90);
+    arc(this.x+61,this.y-30,100,100,-90,90);
+    
+    fill(0, 255, 0);
+    noStroke();
+    ellipse(this.x+60,this.y-190,10,20);
+    ellipse(this.x+61,this.y-85,10,20);
+    
+};
+
+//function that defines how to move the secondInitial Object
+secondInitialObj.prototype.move = function() {
+    this.x += this.speed;
+    if(this.x > 230) {
+        this.speed = this.speed*-1;
+    }
+    if(this.x < 170) {
+        this.speed = this.speed*-1;
+    }
+};
+
+
+//creating the two intial objects that we are going to display and specify the x, y, and speed of each
+var firstLetter = new firstInitialObj(260,85,1);
+var secondLetter = new secondInitialObj(200,275,1);
+
+
+
+
+//using the built in draw function to animate the letters like we did in class
+draw = function() {
+    //setting up the background ot look nice
+    background(65, 138, 138);
+    fill(0, 255, 247);
+    ellipse(200,200,400,300);
+    
+    //drawing the objects to the screen
+    firstLetter.display();
+    secondLetter.display();
+        
+    //making the objects move
+    firstLetter.move();
+    secondLetter.move();
+    
+};
+
+
+
+
+

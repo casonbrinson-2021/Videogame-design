@@ -1,0 +1,1030 @@
+/* 
+ * finalProject.txt
+ * 
+ * Author: Gregory Cason Brinson
+ * Assignment: Final Project - Space Jump
+ * Created: 10/29/20
+ * Last Edited: 12/4/20
+ * Honor Code: "I did not break the honor code on this assignment" - Gregory Cason Brinson
+*/ 
+
+
+//setting the angle mode and defining pi for use in the program with rotations
+var angleMode = "radians";
+var pi = 3.1415926;
+
+
+//Creating the tilemap object to use for the game starting platform positions
+var tilemap = [
+                "p    p   f",
+                "          ",
+                "  e      p",
+                "          ",
+                "    p f  p",
+                "p         ",
+                "       p e",
+                " e        ",
+                "       p  ",
+                "   f      ",
+                "          ",
+                "   p     f",
+                "         e",
+                "f         ",
+                "       p  ",
+                "          ",
+                "p        f",
+                "    p   p ",
+                "          ",
+                "         f",
+                " p        ",
+                "     p   p",
+                "          ",
+                "f   p    p",
+                "          ",
+                "   p      ",
+                "         f",
+                "p         ",
+                "     p    ",
+                "         p",
+                "    p     ",
+                " p        ",
+                "         f",
+                "          ",
+                "    p     ",
+                "          ",
+                "p    f    ",
+                "          ",
+                "          ",
+                "p f      p"];
+
+
+
+//-------Creating the necessary game objects-------//
+//creates the player object
+var playerObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.angle = 0;
+    this.state = 0;     //falling = 0, rising = 1, on platform = 2
+    this.fallingAcceleration = 0.5;
+    this.jumpingAcceleration = 10;
+    this.speed = 0;                 //postive for falling and negative for jumping up(weird)
+    this.empowered = false;
+    this.strong = false;
+    
+    this.moveLeft = 0;
+    this.moveRight = 0;
+    this.jump = 0;
+    
+    this.currentPlatform = -1;
+    this.facing = -6;
+    
+    this.facingLeft = true;
+    this.facingRight = false;
+    
+    this.hasStrength = false;
+    this.hasPowerUp = false;
+};
+
+//creates the platform object that will be used as the jumping platforms for the player
+var platformObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.oldX = 0;
+};
+
+//creates the fruit obejct that will be collected by the player
+var fruitObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.drawMe = true;
+};
+
+var powerObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.drawMe = true;
+};
+
+//creates the enemy object that will try to get the player
+var enemyObj = function(x, y) {
+    this.drawMe = true;
+    this.state = 0;      //floating around = 0, chasing = 1, avoiding = 2
+    
+    this.position = new PVector(x, y);
+    this.step = new PVector(0, 0);
+    this.wanderAngle = random(0, pi);
+    this.wanderDist = random(70*(pi/180), 100*(pi/180));
+    this.angle = 0;
+    this.timer = 0;
+    
+};
+
+//this creates a background star map for visual effects to make the game look better
+var starMapObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+};
+
+//creating the bullet object that will be used to shoot enchanted fruits
+var bulletObj = function() {
+    this.x = 0;
+    this.y = 0;
+    this.fired = false;
+    this.angle = 0;
+    this.speed = 5;
+};
+
+
+
+//-------Drawing functions for various objects-------//
+//used to draw the player to the screen
+playerObj.prototype.draw = function() {
+    if((this.empowered === false) && (this.strong === false)) {
+        pushMatrix();
+        translate(this.x,this.y);
+        rotate(this.angle);
+        
+        noStroke();
+        fill(0,200,50);
+        rect(0, 0, 20, 22);
+        stroke(255,255,255);
+        fill(255,255,255);
+        rect(2,22,4,6);
+        rect(13,22,4,6);
+        //line(1, 22,1,25);
+        //line(5, 22,5,25);
+        //line(10, 22,10,25);
+        //line(15, 22,15, 25);
+        //line(18, 22,18, 25);
+        
+        noStroke();
+        fill(70,70,70);
+        //face
+        ellipse(10+this.facing, 7, 4, 4);
+        rect(5+this.facing, 12, 10, 3);
+        
+        stroke(255,255,255);
+        noFill();
+        ellipse(10,5,30,30);
+        
+        if(this.facingLeft) {
+            noStroke();
+            fill(255,100,0);
+            rect(20,5,5,13);
+        } else if(this.facingRight) {
+            noStroke();
+            fill(255,100,0);
+            rect(-5,5,5,13);
+        }
+        
+        popMatrix();
+        
+    }
+    else if(this.empowered && (this.strong === false)) {
+        pushMatrix();
+        translate(this.x,this.y);
+        rotate(this.angle);
+        noStroke();
+        var r = random(10,245);
+        var g = random(10,245);
+        var b = random(10,245);
+        fill(r,g,b);
+        noStroke();
+        rect(0, 0, 20, 22);
+        stroke(255,255,255);
+        fill(255,255,255);
+        rect(2,22,4,6);
+        rect(13,22,4,6);
+        //line(1, 22,1,25);
+        //line(5, 22,5,25);
+        //line(10, 22,10,25);
+        //line(15, 22,15, 25);
+        //line(18, 22,18, 25);
+        
+        noStroke();
+        fill(70,70,70);
+        //face
+        ellipse(10+this.facing, 7, 4, 4);
+        rect(5+this.facing, 12, 10, 3);
+        
+        stroke(255,255,255);
+        noFill();
+        ellipse(10,5,30,30);
+        
+        if(this.facingLeft) {
+            noStroke();
+            fill(255,100,0);
+            rect(20,5,5,13);
+        } else if(this.facingRight) {
+            noStroke();
+            fill(255,100,0);
+            rect(-5,5,5,13);
+        }
+        popMatrix();
+    }
+    else if(this.strong) {
+        pushMatrix();
+        translate(this.x,this.y);
+        rotate(this.angle);
+        
+        noStroke();
+        fill(255,255,255);
+        rect(0, 0, 20, 22);
+        stroke(255,255,255);
+        fill(255,255,255);
+        rect(2,22,4,6);
+        rect(13,22,4,6);
+        //line(1, 22,1,25);
+        //line(5, 22,5,25);
+        //line(10, 22,10,25);
+        //line(15, 22,15, 25);
+        //line(18, 22,18, 25);
+        
+        noStroke();
+        fill(70,70,70);
+        //face
+        ellipse(10+this.facing, 7, 4, 4);
+        rect(5+this.facing, 12, 10, 3);
+        
+        stroke(255,255,255);
+        noFill();
+        ellipse(10,5,30,30);
+        
+        if(this.facingLeft) {
+            noStroke();
+            fill(255,100,0);
+            rect(20,5,5,13);
+        } else if(this.facingRight) {
+            noStroke();
+            fill(255,100,0);
+            rect(-5,5,5,13);
+        }
+        
+        popMatrix();
+    }
+
+};
+   
+//Used to draw a platform to the screen   
+platformObj.prototype.draw = function() {
+    noStroke();
+    
+    fill(0,200,200);
+    rect(this.x, this.y, 40, 10);
+    fill(255,200,0);
+    triangle(this.x,this.y+10,this.x+5,this.y+15,this.x+10,this.y+10);
+    triangle(this.x+15,this.y+10,this.x+20,this.y+15,this.x+25,this.y+10);
+    triangle(this.x+30,this.y+10,this.x+35,this.y+15,this.x+40,this.y+10);
+    
+};
+
+//used to draw a fruit obejct to the screen
+fruitObj.prototype.draw = function() {
+    noStroke();
+    fill(255, 122, 0);
+    ellipse(this.x, this.y, 20, 19);
+    fill(0,255,0);
+    ellipse(this.x+2,this.y-8,8,4);
+    
+};
+
+
+powerObj.prototype.draw = function() {
+    stroke(0,0,0);
+    fill(255,255,0);
+    ellipse(this.x,this.y, 20,16);
+    fill(0,255,0);
+    ellipse(this.x+2,this.y-7,8,4);
+};
+
+//used to draw an enemy object to the screen
+enemyObj.prototype.draw = function() {
+    pushMatrix();
+    translate(this.position.x,this.position.y);
+    rotate(this.angle);
+    noStroke();
+
+    fill(255,0,0);
+    //enemy main ship
+    rect(-10,-10,20,20);
+    fill(250,0,250);
+    triangle(-10,-10,0,-20,10,-10);
+    fill(255,0,0);
+    rect(-20,5,10,5);
+    rect(10,5,10,5);
+    rect(-20,-5,5,15);
+    rect(15,-5,5,15);
+    fill(0,255,255);
+    triangle(-20,-5,-17.5,-10,-15,-5);
+    triangle(15,-5,17.5,-10,20,-5);
+    
+    fill(255,255,255);
+    ellipse(0,-5,15,5);
+    
+    
+    //ghose hanging triangles
+    fill(255,200,0);
+    triangle(-8,10,-3,10,-5.5,18);
+    triangle(-3,10,2,10,-0.5,18);
+    triangle(3,10,8,10,5.5,18);
+    
+    //ghost facial features
+    //fill(0,0,0);
+    //ellipse(-4,0,4,4);
+    //ellipse(4,0,4,4);
+    //ellipse(0,6,10,4);
+    popMatrix();
+};
+
+//handles drawing the star map to the screen for background visuals
+starMapObj.prototype.draw = function() {
+    fill(255,255,255);
+    ellipse(this.x, this.y, 5, 5);
+    this.y += 0.2;
+    
+    if(this.y > 400) {
+        this.y = 0;
+    }
+};
+
+
+//-------Initializing the game objects and variables-------//
+var player = new playerObj(-5, 200);       //the player
+var platforms = [];                         //array of platforms
+var fruits = [];                            //array of fruits
+var powerUp = new powerObj(200,15);         //a powerup object
+var enemies = [];                           //array of enemy objects
+var animatedEnemies = [];
+animatedEnemies.push(new enemyObj(400,380));
+animatedEnemies.push(new enemyObj(0,380));
+var gameStart = false;                      //starts the game when true
+var gameOver = false;                       //determines if the game is over or not
+var gameWon = false;                        //determines if the player has won or not
+var score = 0;                              //keeps track of how many fruits player has got
+var platformMoveSpeed = 0.6;                //the speed at which the platforms move down
+var count = 0;                              //keeps track of the time ellapsed from empower
+var count2 = 0;
+var clicked = 0;
+var currentFrameCount = 0;
+
+var alphaVal = 0; //keeps track of the alpha value for background transparency
+var timer = 0.0;
+
+//add in the starMapObj for this game's background visuals
+var starMap = [];
+var starX = 10;
+var starY = 10;
+for(var i = 0; i  < 50; i++) {
+    starMap.push(new starMapObj(starX, starY));
+    starX = random(10, 390);
+    starY = random(10, 390);
+}
+
+
+//bullet index things
+var bulletIndex = 0;
+var bullets = [];
+//initializing the size bullets you can use
+for(var i = 0; i < 6; i++) {
+    bullets.push(new bulletObj());
+}
+
+//function to draw the bullets to the screen
+bulletObj.prototype.draw = function() {
+    pushMatrix();
+    translate(this.x,this.y);
+    rotate(this.angle+pi/2);
+    fill(0, 255, 255);
+    ellipse(cos(this.angle+(pi/2)), sin(this.angle+(pi/2))-12, 4, 8);
+
+    //what to do if the bullet goes off the screen
+    if((this.y < 0) || (this.y > 400) || (this.x < 0) || (this.x > 400)) {
+        this.fired = false;
+    }
+    popMatrix();
+    
+};
+
+//handles moving the bullets accross the scree
+bulletObj.prototype.move = function() {
+    this.x+=cos(this.angle/*-(pi/2)*/)*this.speed;
+    this.y+=sin(this.angle/*-(pi/2)*/)*this.speed;
+};
+
+
+//-------Collision checking-------//
+bulletObj.prototype.checkCollisions = function() {
+    var self = this; 
+    
+    //checking for collisions with enemies
+    for(var i = 0; i < enemies.length; i++) {
+        if(enemies[i].drawMe === true) {
+        if((self.x < enemies[i].position.x+10) && (self.x > enemies[i].position.x-10) && (self.y > enemies[i].position.y-10) && (self.y < enemies[i].position.y+10)) {
+                self.fired = false;
+                enemies[i].drawMe = false;
+            }
+        }
+    }
+};
+
+//-------Handling checking if a bullet has been fired-------//
+//determines if the spacebar was pressed and when the bullet should be fired on screen
+var checkFire = function() {
+    /*
+    if(keyArray[32] === 1) {
+        if(currentFrameCount < (frameCount - 7)) {
+            currentFrameCount = frameCount;
+            bullets[bulletIndex].fired = true;
+            bullets[bulletIndex].x = player.x;
+            bullets[bulletIndex].y = player.y;
+            bullets[bulletIndex].angle = player.rotateAngle;
+            bulletIndex++;
+            if(bulletIndex > 5) {
+                bulletIndex = 0;
+            }
+        }
+    }
+    */
+};
+
+
+//-------Moving functions-------//
+//handles moving the player and gravity and all that
+playerObj.prototype.move = function() {
+    var self = this;
+
+    //falling state
+    if(self.state === 0) {
+        self.y+=self.speed;
+        self.speed+=self.fallingAcceleration;
+        
+        for(var i = 0; i < platforms.length; i++) {
+            if((self.y+29 > platforms[i].y) && (self.y+29 < platforms[i].y+10) && (self.x < platforms[i].x+40) && (self.x+20 > platforms[i].x)) {
+                self.state = 2;
+                self.currentPlatform = i;
+                self.y = platforms[i].y-29;
+                self.speed = 0;
+            }
+        }
+    }
+    
+    //rising state
+    if(self.state === 1) {
+        self.y-=self.speed;
+        self.speed-=self.fallingAcceleration;
+        
+        if(self.speed < 0) {
+            self.state = 0;
+            self.speed = 0;
+        }
+    }
+    
+    //on a platform state
+    if(self.state === 2) {
+        self.y+=platformMoveSpeed;
+
+        if(self.jump === 1) {
+            self.speed = self.jumpingAcceleration;
+            self.state = 1;
+        }
+        
+        if((self.x+20 < platforms[self.currentPlatform].x) || (self.x > platforms[self.currentPlatform].x+40)) {
+            self.state = 0;
+        }
+    }
+    
+    //handles moving the player left and right
+    if(self.moveLeft === 1) {
+        self.x-=3;
+        if(self.facing > 0) {
+            self.facing = self.facing*-1;
+        }
+    }
+    if(self.moveRight === 1) {
+        self.x+=3;
+        if(self.facing < 0) {
+            self.facing = self.facing*-1;
+        }
+    }
+    
+    //check if the player has hit the bottom border to end the game
+    if(self.y+25 > 400) {
+        gameOver = true;
+    }
+    //keep the player in bounds
+    if(self.x < 0) {
+        self.x = 0;
+    }
+    if(self.x+20 > 400) {
+        self.x = 380;
+    }
+    if(self.y < 0) {
+        self.y = 0;
+        self.state = 0;
+        self.speed = 0;
+    }
+    
+    //handles collission checking with the fruits in the game
+    for(var i = 0; i < fruits.length; i++) {
+        if((self.y+25 > fruits[i].y-10) && (self.y < fruits[i].y+10) && (self.x < fruits[i].x+10) && (self.x+20 > fruits[i].x-10) && (fruits[i].drawMe === true)) {
+            fruits[i].drawMe = false;
+            self.hasPowerUp = true;
+            //count = 0;
+            //score++;
+        }
+    }
+    
+    //handles collisoin checking with enemies in the game
+    for(var i = 0; i < enemies.length; i++) {
+        if((self.y+25 > enemies[i].position.y-8) && (self.y < enemies[i].position.y+21) && (self.x < enemies[i].position.x+8) && (self.x+20 > enemies[i].position.x-8) && enemies[i].drawMe === true) {
+            if(self.empowered === false && self.strong === false) {
+                gameOver = true;
+            }
+            if(self.strong === true) {
+                enemies[i].drawMe = false;
+            }
+        }
+    }
+    
+    
+    //handles collission checking with the the powerup in the game
+    /*
+    if((self.y+25 > powerUp.y-10) && (self.y < powerUp.y+10) && (self.x < powerUp.x+10) && (self.x+20 > powerUp.x-10) && (powerUp.drawMe === true)) {
+            ellipse(200,200,20,20);
+            powerUp.drawMe = false;
+            self.hasStrength = true;
+            //count2 = 0;
+        }
+        */
+        
+    
+    
+};
+
+//this function handles the movement of the platforms down the screen
+platformObj.prototype.move = function() {
+    //if the platform goes beyond the bottom border
+     
+     //change the x position of the platforms
+    if(this.y > 400) {
+        this.y = -10;
+        this.x = round(random(0, 10))*40;
+    }
+    
+    //move the platforms
+    this.y+=platformMoveSpeed;
+};
+
+fruitObj.prototype.move = function() {
+    //if the platform goes beyond the bottom border
+     
+     //change the x position of the platforms
+    if(this.y > 410) {
+        this.y = -10;
+        this.x = round(random(0, 10))*40;
+    }
+    
+    //move the platforms
+    this.y+=platformMoveSpeed;
+};
+
+//enemy object floating around
+enemyObj.prototype.float = function() {
+    this.step.set(cos(this.wanderAngle), sin(this.wanderAngle));
+    this.position.add(this.step);
+    this.wanderAngle += random(-15*(pi/180), 15*(pi/180));
+    
+    this.wanderDist--;
+    if (this.wanderDist < 0) {
+        this.wanderDist = random(70, 100);
+        this.wanderAngle += random(-pi/2, pi/2);
+    }
+    
+    //keep the ghosts in bounds while wandering around
+    if (this.position.x > 392) {
+        this.position.x = 392;
+        this.wanderAngle*=-1;
+    }
+    else if (this.position.x < 8) {
+        this.position.x = 8;
+        this.wanderAngle*=-1;
+    }
+    if (this.position.y > 379) {
+        this.position.y = 379;
+        this.wanderAngle*=-1;
+    }
+    else if (this.position.y < 8) {
+        this.position.y = 8;
+        this.wanderAngle*=-1;
+    }
+            
+};
+
+//enemy object chasing the player
+enemyObj.prototype.chase = function() {
+    this.step.set(player.x - this.position.x, player.y - this.position.y);
+    this.step.normalize();
+    
+    this.angle = this.step.heading() + pi/2;
+    this.position.x += this.step.x;
+    this.position.y += this.step.y;
+};
+
+//enemy object chasing the player
+enemyObj.prototype.avoid = function() {
+    this.step.set(player.x - this.position.x, player.y - this.position.y);
+    this.step.normalize();
+
+    this.angle = this.step.heading() + 3*pi/2;
+    this.position.x -= this.step.x;
+    this.position.y -= this.step.y;
+    
+    //keep the ghost in the game bounds
+    if (this.position.x > 392) {this.position.x = 392;}
+    else if (this.position.x < 8) {this.position.x = 8;}
+    if (this.position.y > 379) {this.position.y = 379;}
+    else if (this.position.y < 8) {this.position.y = 8;}
+    
+};
+
+//enemy object movement by changing state
+enemyObj.prototype.move = function() {
+    //chase the player is the player is in range of the ghost
+    if ((dist(this.position.x, this.position.y, player.x, player.y) < 170 ) && (player.empowered === false) && (player.strong === false)) {
+                this.chase();
+            }
+    //avoid the player if the ghosts see the player empowered
+    else if ((dist(this.position.x, this.position.y, player.x, player.y) < 170 ) && (player.empowered === true)) {
+                this.avoid();
+            }
+    //float around if the ghosts don't see the player
+    else if ((dist(this.position.x, this.position.y, player.x, player.y) > 170 ) && (player.empowered === true)) {
+                this.float();
+        }
+    //float around if the ghosts don't see the player and the palyer isnt empowered
+    else if ((dist(this.position.x, this.position.y, player.x, player.y) > 170 ) && (player.empowered === false)) {
+                this.float();
+        }
+    //float around if the ghosts don't see the player and the palyer isnt empowered
+    else if ((dist(this.position.x, this.position.y, player.x, player.y) > 120 ) && (player.strong === false)) {
+                this.float();
+        }
+        //float around if the ghosts don't see the player and the palyer isnt empowered
+    else if ((dist(this.position.x, this.position.y, player.x, player.y) < 120 ) && (player.strong === true)) {
+                this.avoid();
+        }
+    
+    
+};
+
+//--------Extra functions for starting screen animations-------//
+playerObj.prototype.animate = function() {
+    this.draw();
+    this.x++;
+    this.angle+=(pi/180);
+    if(this.x > 415) {
+        this.x = -10;
+    }
+};
+
+enemyObj.prototype.animate = function() {
+    this.draw();
+    this.position.x+=cos(this.angle-(pi/2));
+    this.position.y+=sin(this.angle-(pi/2));
+    //this.angle-=pi/180;
+    if(this.position.x > 415) {
+        this.position.x = -15;
+        this.angle = random(0,2*pi);
+    }
+    if(this.position.x < -15) {
+        this.position.x = 415;
+        this.angle = random(0,2*pi);
+    }
+    if(this.position.y > 415) {
+        this.position.y = -15;
+        this.angle = random(0,2*pi);
+    }
+    if(this.position.y < -15) {
+        this.position.y = 415;
+        this.angle = random(0,2*pi);
+    }
+};
+
+
+
+//-------Initialization functions-------//
+var initTilemap = function() {
+    for(var i = 0; i < tilemap.length; i++) {
+        for(var j = 0; j < tilemap.length/4; j++) {
+            switch(tilemap[i][j]) {
+                case 'p': platforms.push(new platformObj(j*40, i*10));
+                    break;
+                case 'f': fruits.push(new fruitObj((j*40)+10, i*10));
+                    break;
+                case 'e': enemies.push(new enemyObj((j*40)+10, i*10));
+                    break;
+                    
+            }
+        }
+    }
+};
+
+
+//-------Keycode functions to keep track of keys pressed-------//
+var keyPressed = function() {
+    // if the user presses 'd' or RIGHT ARROW 
+    if ((keyCode === 68) || (keyCode === RIGHT)) {
+            player.moveRight = 1;
+            player.facingRight = true;
+            player.facingLeft = false;
+    }
+    //if the user presses 'a' or LEFT ARROW
+    if ((keyCode === 65) || (keyCode === LEFT)) {
+            player.moveLeft = 1;
+            player.facingLeft = true;
+            player.facingRight = false;
+    }
+    //if the user presses 'w' or UP ARROW
+    if ((keyCode === 87) || (keyCode === UP) && (player.jump === 0)) {
+            player.jump = 1;
+    }
+    if((keyCode === 32)) {
+         if(player.hasPowerUp) {
+        count = 0;
+        player.empowered = true;
+        player.hasPowerUp = false;
+    }
+    }
+};
+
+var keyReleased = function() {
+    if ((keyCode === 68) || (keyCode === RIGHT)) {
+            player.moveRight = 0;
+    }
+    else if ((keyCode === 65) || (keyCode === LEFT)) {
+            player.moveLeft = 0;
+    }
+    else if ((keyCode === 87) || (keyCode === UP)) {
+        player.jump = 0;
+    }
+};
+
+//handles the mouse stuff to start the game if the mouse is clicked
+mouseClicked = function() {
+    clicked++;
+    
+    if(currentFrameCount < (frameCount - 7)) {
+            currentFrameCount = frameCount;
+            bullets[bulletIndex].fired = true;
+            bullets[bulletIndex].x = player.x+10;
+            bullets[bulletIndex].y = player.y+10;
+            var x = mouseX;
+            var y = mouseY;
+            var angleNeeded = 0;
+            //first quadrant
+            if((x > player.x) && (y < player.y)) {
+                angleNeeded = -atan((-y+player.y)/(x-player.x));
+            }
+            if((x < player.x) && (y < player.y)) {
+                angleNeeded = -atan((-y+player.y)/(x-player.x))+(pi);
+            }
+            if((x < player.x) && (y > player.y)) {
+                angleNeeded = -atan((-y+player.y)/(x-player.x))+pi;
+            }
+            if((x > player.x) && (y > player.y)) {
+                angleNeeded = -atan((-y+player.y)/(x-player.x));
+            }
+            bullets[bulletIndex].angle = angleNeeded;
+            
+            bulletIndex++;
+            if(bulletIndex > 5) {
+                bulletIndex = 0;
+            }
+        }
+};
+
+//initialize the tilemap for the start of the game
+initTilemap();
+animatedEnemies[0].angle = -pi/4;
+animatedEnemies[1].angle = pi/2;
+
+//-------The main draw loop that runs constantly-------//
+var draw = function() {
+    //instruction screen
+    if(gameStart === false) {
+        if(clicked === 0) {
+            background(0,0,0);
+            
+            //draw star map
+            for(var i = 0; i < 50; i++) {
+                starMap[i].draw();
+            }
+            
+            player.animate();
+            animatedEnemies[0].animate();
+            animatedEnemies[1].animate();
+            
+            fill(255,0,0);
+            textSize(45);
+            text("SPACE JUMP!", 55,45);
+            
+            fill(255,255,255);
+            textSize(20);
+            text("Created By: Gregory Cason Brinson", 45, 70);
+            
+            fill(255,0,0);
+            textSize(20);
+            text("click screen to continue", 95, 380);
+        }
+        if(clicked === 1) {
+            background(0,0,0);
+            
+            //draw star map
+            for(var i = 0; i < 50; i++) {
+                starMap[i].draw();
+            }
+            
+            player.animate();
+            animatedEnemies[0].animate();
+            animatedEnemies[1].animate();
+            
+            fill(255,0,0);
+            textSize(35);
+            text("How To Play", 105,35);
+            
+            fill(255,255,255);
+            textSize(14);
+            text("You are a space hero trying to get back to base without\ngetting caught by the evil space ships. To get back up to\nbase you can use the hovering space bounce pads.While\ntraveling be sure to collect shields to stay alive longer! If\nyou fall below the lowest platform or get\ncaught by a evil spaceship you lose!!\n\nYou can shoot the evil spaceships to kill them but they will\neventually return to try and get you. So be on the lookout!", 35, 65);
+            fill(255,0,0);
+            textSize(25);
+            text("Controls", 35,230);
+            fill(255,255,255);
+            textSize(15);
+            text("jump = 'w' or UP ARROW\nmove left = 'a' or LEFT ARROW\nmove right = 'd' or RIGHT ARROW\nuse power up = space bar\nshoot = mouse click\naim = mouse position", 35, 255);
+            
+            fill(255,0,0);
+            textSize(20);
+            text("click screen to start", 110, 380);
+        }
+        if(clicked > 1) {
+            gameStart = true;
+            player.x = 170;
+            player.y = 200;
+            player.angle = 0;
+            clicked = 0;
+        }
+        
+    }
+    
+    //the actual game
+    else {
+        //show the level one text for a few seconds
+        if(clicked === 0) {
+            background(0,0,0);
+            
+            //draw star map
+            for(var i = 0; i < 50; i++) {
+                starMap[i].draw();
+            }
+            
+            //draw the platforms
+            for(var i = 0; i < platforms.length; i++) {
+                platforms[i].draw();
+                platforms[i].move();
+            }
+            
+            fill(255, 0, 0);
+            textSize(50);
+            text("Get Ready!", 80, 210);
+            fill(255,255,255);
+            textSize(25);
+            text("Try to survive for 25 seconds!", 50, 240);
+        }
+        //normal gameplay
+        if((clicked !== 0) && (gameOver === false) && (gameWon === false)) {
+            //draw the background
+            background(0,0,0);
+            
+            timer++;
+            textSize(15);
+            score = timer/60;
+            text(score, 345, 390);
+            
+            //draw star map
+            for(var i = 0; i < 50; i++) {
+                starMap[i].draw();
+            }
+
+            //draw the player
+            player.draw();
+            player.move();
+            if(player.empowered) {
+                count++;
+            }
+            if((count >= 240) && (player.empowered)) {
+                player.empowered = false;
+                count = 0;
+            }
+            if(player.strong) {
+                count2++;
+            }
+            if((count2 >= 480) && (player.strong)) {
+                player.strong = false;
+                count = 0;
+            }
+            
+            //draw the bullets to the screen that have been fired
+            checkFire();
+            for(var i = 0; i < 6; i++) {
+                if(bullets[i].fired === true) {
+                    bullets[i].draw();
+                    bullets[i].move();
+                    bullets[i].checkCollisions();
+                }
+            }
+             
+            //draw the platforms
+            for(var i = 0; i < platforms.length; i++) {
+                platforms[i].draw();
+                platforms[i].move();
+            }
+            
+            //draw the fruits to the screen
+            for(var i = 0; i < fruits.length; i++) {
+                if(fruits[i].drawMe) {
+                    fruits[i].draw();
+                    fruits[i].move();
+                }
+            }
+            
+            
+            //draw the powerup to the screen
+            //if(powerUp.drawMe) {
+                //powerUp.draw();
+           //}
+            
+            
+            //draw the enemies to the screen
+            for(var i = 0; i < enemies.length; i++) {
+                if(enemies[i].drawMe) {
+                    enemies[i].draw();
+                    enemies[i].move();
+                }
+                if(enemies[i].drawMe === false) {
+                    enemies[i].timer++;
+                }
+                if(enemies[i].timer > 60*5) {
+                    enemies[i].drawMe = true;
+                    enemies[i].timer = 0;
+                }
+            }
+
+            
+            if(player.hasPowerUp && !player.empowered) {
+                fill(255, 200, 0);
+                textSize(20);
+                text("Click to Use Power-Up!", 10, 385);
+            } else if(player.empowered) {
+                text("Power-Up Time Left: ", 10, 385);
+                text(4-(count/60), 150, 385);
+            }
+            
+            if(score === 25) {
+                gameWon = true;
+            }
+            
+        }
+        //if the player loses
+        else if(gameOver) {
+            background(255,0,0, alphaVal);
+            alphaVal+=0.5;
+            fill(255,255,255);
+            textSize(50);
+            text("GAME OVER", 50,210);
+            textSize(30);
+            text("Time Alive: ", 65, 250);
+            text(score, 230, 250);
+            text("s", 330, 250);
+        }
+        //if the player wins
+        else if(gameWon) {
+            background(255,255,255);
+            
+            var r = random(10,255);
+            var g = random(10,255);
+            var b = random(10,255);
+            
+            fill(r,g,b);
+            textSize(50);
+            text("YOU WIN!", 80, 210);
+            textSize(20);
+            fill(0,0,0);
+            text("Time Alive: ", 130, 250);
+            text(score, 250, 250);
+            text(" s", 290, 250);
+            
+        }
+    }
+     
+};

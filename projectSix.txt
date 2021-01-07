@@ -1,0 +1,378 @@
+/* 
+ * projectSix.txt
+ * 
+ * Author: Gregory Cason Brinson
+ * Assignment: Project 6 - Butterflies and Blow-bubbles
+ * Created: 10/22/20
+ * Last Edited: 10/23/20
+ * Honor Code: "I did not break the honor code on this assignment" - Gregory Cason Brinson
+*/ 
+
+//setting the angle mode and defining pi for use int he program with rotations
+angleMode = "radians";
+var pi = Math.PI;
+
+
+//the monte carlo funciton for randomness in colors (biased towards white right now
+var monteCarlo = function() {
+    var v1 = random(50, 255);
+    var v2 = random(50, 255);
+    while (v2 > v1) {
+        v1 = random(50, 255);
+        v2 = random(50, 255);
+    }
+    return(v1);
+};
+
+//particle object
+var particleObj = function(x, y) {
+    this.position = new PVector(x, y);
+    this.velocity = new PVector(random(-8, 2), random(0, 5));
+    this.size = random(20, 40);
+    this.position.y -= (18 - this.size);
+    this.c1 = monteCarlo();
+    this.c2 = monteCarlo();
+    this.c3 = monteCarlo();
+    this.timeLeft = 255;
+    this.minSpeed = random(0.5,1.5);
+};
+
+var images = [];
+var particles = [];
+var makeNewBubble = 0;      //keeps the bubbles coming out at a certain rate
+var flap = false;
+var timer = 0;
+
+
+//handles moving the bubbleson the screen
+particleObj.prototype.move = function() {
+    this.position.add(this.velocity);
+    this.timeLeft--;
+    
+    this.velocity.x+=0.05;
+    this.velocity.y-=0.05;
+    if(this.velocity.x >= -this.minSpeed) {
+        this.velocity.x = -this.minSpeed;
+    }
+    if(this.velocity.y <= this.minSpeed) {
+        this.velocity.y = this.minSpeed;
+    }
+    
+    
+};
+
+particleObj.prototype.draw = function() {
+    noStroke();
+    fill(this.c1, this.c2, this.c3, this.timeLeft);
+    ellipse(this.position.x, this.position.y, this.size, this.size);
+};
+
+
+
+//-----subdivide functions------//
+var midPoint = function(a, b) {
+    var m = new PVector((a.x + b.x)/2, (a.y+b.y)/2);
+    return m;
+};
+
+var clearPoints = function(p) {
+    p.splice(0, p.length);
+};
+
+
+// Split result in p2
+var splitPoints = function(p1, p2) {
+    clearPoints(p2);
+    p2.push(p1[0]);
+    for (var i = 0; i<p1.length-2; i++) {
+        var m = midPoint(p1[i], p1[i+1]);
+        p2.push(m);
+        p2.push(p1[i+1]);
+    }
+
+    var m = midPoint(p1[i], p1[0]);
+    p2.push(m);
+};
+
+// average
+var averagePoints = function(p1, p2) {
+    p2.splice(0, p2.length);
+    for (var i = 0; i <p1.length-2; i++) {
+        p2.push(midPoint(p1[i], p1[i+1]));
+    }
+    p2.push(midPoint(p1[i], p1[0]));
+    p2.push(p2[0]);
+};
+
+var drawShape = function(p) {
+    //fill(255, 0, 0);
+    beginShape();
+        for (var i=0; i<p.length; i++) {
+            vertex(p[i].x, p[i].y);
+        }
+    endShape();
+};
+
+//variables for the butterfly subdivide things
+var leftWing = [];
+var rightWing = [];
+var points = [];
+var points2 = [];
+var points3 = [];
+var points4 = [];
+//left wing
+leftWing.push(new PVector(100,50));
+leftWing.push(new PVector(90,30));
+leftWing.push(new PVector(50,0));
+leftWing.push(new PVector(10,5));
+leftWing.push(new PVector(0,40));
+leftWing.push(new PVector(10,60));
+leftWing.push(new PVector(50,70));
+leftWing.push(new PVector(20,80));
+leftWing.push(new PVector(15,100));
+leftWing.push(new PVector(30,120));
+leftWing.push(new PVector(50,130));
+leftWing.push(new PVector(80,120));
+leftWing.push(new PVector(100,50));
+splitPoints(leftWing, points);
+averagePoints(points, points2);
+splitPoints(points2, leftWing);
+averagePoints(leftWing, points);
+
+//right wing
+rightWing.push(new PVector(-100,50));
+rightWing.push(new PVector(-90,30));
+rightWing.push(new PVector(-50,0));
+rightWing.push(new PVector(-10,5));
+rightWing.push(new PVector(-0,40));
+rightWing.push(new PVector(-10,60));
+rightWing.push(new PVector(-50,70));
+rightWing.push(new PVector(-20,80));
+rightWing.push(new PVector(-15,100));
+rightWing.push(new PVector(-30,120));
+rightWing.push(new PVector(-50,130));
+rightWing.push(new PVector(-80,120));
+rightWing.push(new PVector(-100,50));
+splitPoints(rightWing, points3);
+averagePoints(points3, points4);
+splitPoints(points4, rightWing);
+averagePoints(rightWing, points3);
+
+
+
+//smaller wings
+var leftSmaller = [];
+var rightSmaller = [];
+var one = [];
+var two = [];
+
+leftSmaller.push(new PVector(50,50));
+leftSmaller.push(new PVector(45,30));
+leftSmaller.push(new PVector(25,0));
+leftSmaller.push(new PVector(5,5));
+leftSmaller.push(new PVector(0,40));
+leftSmaller.push(new PVector(5,60));
+leftSmaller.push(new PVector(25,70));
+leftSmaller.push(new PVector(10,80));
+leftSmaller.push(new PVector(7.5,100));
+leftSmaller.push(new PVector(15,120));
+leftSmaller.push(new PVector(25,130));
+leftSmaller.push(new PVector(40,120));
+leftSmaller.push(new PVector(50,50));
+splitPoints(leftSmaller, one);
+averagePoints(one, two);
+splitPoints(two, leftSmaller);
+averagePoints(leftSmaller, one);
+
+rightSmaller.push(new PVector(-50,50));
+rightSmaller.push(new PVector(-45,30));
+rightSmaller.push(new PVector(-25,0));
+rightSmaller.push(new PVector(-5,5));
+rightSmaller.push(new PVector(-0,40));
+rightSmaller.push(new PVector(-5,60));
+rightSmaller.push(new PVector(-25,70));
+rightSmaller.push(new PVector(-10,80));
+rightSmaller.push(new PVector(-7.5,100));
+rightSmaller.push(new PVector(-15,120));
+rightSmaller.push(new PVector(-25,130));
+rightSmaller.push(new PVector(-40,120));
+rightSmaller.push(new PVector(-50,50));
+splitPoints(rightSmaller, one);
+averagePoints(one, two);
+splitPoints(two, rightSmaller);
+averagePoints(rightSmaller, one);
+
+
+
+
+var butterflyObj = function(x, y) {
+    this.c1 = monteCarlo();
+    this.c2 = monteCarlo();
+    this.c3 = monteCarlo();
+    
+    this.position = new PVector(x, y);
+    this.step = new PVector(0, 0);
+    this.wanderAngle = random(0, pi);
+    this.wanderDist = random(70*(pi/180), 100*(pi/180));
+    
+    //bezier stuff
+    this.x2 = -4;
+    this.y2 = 12;
+    this.x1 = -4;
+    this.y1 = -8;
+    this.cx1 = 2;
+    this.cx2 = -18;
+    this.cy1 = 4;
+    this.cy2 = -2;
+    
+    this.cx1Dir = 0.5;
+    this.cx2Dir = -0.5;
+    this.x2Dir = -0.5;
+    
+    //bezier stuff
+    this.Xx2 = 4;
+    this.Xy2 = 12;
+    this.Xx1 = 4;
+    this.Xy1 = -8;
+    this.Xcx1 = -8;
+    this.Xcx2 = 8;
+    this.Xcy1 = 4;
+    this.Xcy2 = -2;
+    
+    this.Xcx1Dir = 1;
+    this.Xcx2Dir = -0.7;
+    this.Xx2Dir = -0.7;
+};
+
+
+butterflyObj.prototype.draw = function() {
+
+    if(flap) {
+        fill(this.c1, this.c2, this.c3);
+        noStroke();
+        beginShape();
+            for (var i=0; i<leftWing.length; i++) {
+                vertex(leftSmaller[i].x+this.position.x-50, leftSmaller[i].y+this.position.y);
+            }
+            for (var i=0; i<rightWing.length; i++) {
+                vertex(rightSmaller[i].x+this.position.x+50, rightSmaller[i].y+this.position.y);
+            }
+        endShape();
+    } else {
+        fill(this.c1, this.c2, this.c3);
+        noStroke();
+        beginShape();
+            for (var i=0; i<leftWing.length; i++) {
+                vertex(leftWing[i].x+this.position.x-100, leftWing[i].y+this.position.y);
+            }
+            for (var i=0; i<rightWing.length; i++) {
+                vertex(rightWing[i].x+this.position.x+100, rightWing[i].y+this.position.y);
+            }
+        endShape();
+    }
+    fill(50, 50, 50);
+    ellipse(this.position.x, this.position.y+20, 16,16);
+    ellipse(this.position.x, this.position.y+75, 15, 100);
+    
+    noFill();
+    stroke(0,0,0);
+    bezier(this.x1+this.position.x, this.y1+this.position.y, this.cx1+this.position.x, this.cy1+this.position.y, this.cx2+this.position.x, this.cy2+this.position.y, this.x2+this.position.x, this.y2+this.position.y);
+
+    this.cx1 += this.cx1Dir;
+    if ((this.cx1 > this.x2) || (this.cx1 < this.x1)) {this.cx1Dir = -this.cx1Dir;}
+    this.cx2 += this.cx2Dir;
+    if ((this.cx2 < this.x1) || (this.cx2 > this.x2)) {this.cx2Dir = -this.cx2Dir;}
+    this.x1 += this.x2Dir;
+    if ((abs(this.x1 - this.x2) > 20) || (this.x2 < this.x1)) {this.x2Dir = -this.x2Dir;}
+
+    bezier(this.Xx1+this.position.x, this.Xy1+this.position.y, this.Xcx1+this.position.x, this.Xcy1+this.position.y, this.Xcx2+this.position.x, this.Xcy2+this.position.y, this.Xx2+this.position.x, this.Xy2+this.position.y);
+    
+    this.Xcx1 += this.Xcx1Dir;
+    if ((this.Xcx1 > this.Xx2) || (this.Xcx1 < this.Xx1)) {this.Xcx1Dir = -this.Xcx1Dir;}
+    this.Xcx2 += this.Xcx2Dir;
+    if ((this.Xcx2 < this.Xx1) || (this.Xcx2 > this.Xx2)) {this.Xcx2Dir = -this.Xcx2Dir;}
+    this.Xx1 += this.Xx2Dir;
+    if ((abs(this.Xx1 - this.Xx2) > 15) || (this.Xx2 < this.Xx1)) {this.Xx2Dir = -this.Xx2Dir;}
+
+};
+
+///butterfly float function
+butterflyObj.prototype.float = function() {
+    this.step.set(cos(this.wanderAngle), sin(this.wanderAngle));
+    this.position.add(this.step);
+    this.wanderAngle += random(-15*(pi/180), 15*(pi/180));
+    
+    this.wanderDist--;
+    if (this.wanderDist < 0) {
+        this.wanderDist = random(70, 100);
+        this.wanderAngle += random(-pi/2, pi/2);
+    }
+    
+    //keep the ghosts in bounds while wandering around
+    if (this.position.x > 400) {
+        this.position.x = 400;
+    }
+    else if (this.position.x < 0) {
+        this.position.x = 0;
+    }
+    if (this.position.y+100 > 400) {
+        this.position.y = 300;
+    }
+    else if (this.position.y < 0) {
+        this.position.y = 0;
+    }
+            
+};
+
+butterflyObj.prototype.move = function() {
+    this.float();
+};
+
+
+var butterfly = new butterflyObj(75,75);
+var butterflyTwo = new butterflyObj(150,200);
+var butterflyThree = new butterflyObj(200, 150);
+
+
+
+
+//main game loop that runs 60 times per second
+var draw = function() {
+    background(0,255,255);
+    
+    timer++;
+    if(timer>=15) {
+        timer = 0;
+        flap = !flap;
+    }
+    
+    
+    makeNewBubble++;
+     if ((particles.length < 50) && (makeNewBubble > 30)) {
+        particles.push(new particleObj(400, 0));
+        makeNewBubble = 0;
+
+    }
+    for (var i=0; i<particles.length; i++) {
+        if ((particles[i].timeLeft > 0) && (particles[i].position.y < 400)) {
+            particles[i].draw();
+            particles[i].move();
+        }
+        else {
+            particles.splice(i, 1);
+        }
+    }
+    
+    butterfly.draw();
+    butterfly.move();
+    butterflyTwo.draw();
+    butterflyTwo.move();
+    butterflyThree.draw();
+    butterflyThree.move();
+};
+
+
+
+
+
+

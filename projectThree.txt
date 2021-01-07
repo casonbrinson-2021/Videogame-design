@@ -1,0 +1,673 @@
+/* 
+ * projectThree.txt
+ * 
+ * Author: Gregory Cason Brinson
+ * Assignment: Project 3 - Extended Tilemap Game
+ * Created: 9/23/20
+ * Last Edited: 9/23/20
+ * Honor Code: "I did not break the honor code on this assignment" - Gregory Cason Brinson
+*/ 
+
+//set the angle mode for the project
+angleMode = "radians";
+var pi = Math.PI;
+
+//-------Creating the Tilemap-------//
+var tilemap = [
+        "tttttttttttttttttttttttttttttttttttttttttttttttttt",
+        "l   f                             w              r",
+        "l                        f         w    e      f r",
+        "l         f           e            w             r",
+        "lwwwwwwwwwww                      w          wwwwr",
+        "l                                 w              r",
+        "l                   e         f     w    f       r",
+        "l         f                        w             r",
+        "l     e                            wwwwwww       r",
+        "l             e                                  r",
+        "l                          e                     r",
+        "l                                         e      r",
+        "l                                f               r",
+        "l     e       e                                  r",
+        "l                                                r",
+        "lwwwwwwwwwwwwwwww  f e       e         e         r",
+        "l                                         e      r",
+        "l       e       e                                r",
+        "l                                                r",
+        "l    e                        wwwwwwwwwwwwwwwwwwwr",
+        "l                  e                             r",
+        "l e                           e                  r",
+        "l           e     f                        e     r",
+        "l    e               e    w         e            r",
+        "l         f               w                      r",
+        "l              e          w      e               r",
+        "l     e                   w                      r",
+        "l                         w                  e   r",
+        "l            e      e     w          e           r",
+        "l                                                r",
+        "l    e               f     e    f                r",
+        "l                e                    e          r",
+        "l        e                                  e    r",
+        "l                     e                          r",
+        "l    e        f                  e               r",
+        "l                                     e          r",
+        "l                                                r",
+        "l     wwwwwwwwwwww          e          wwwwwwwwwwr",
+        "l                                                r",
+        "l      f                               e         r",
+        "l            f         e                         r",
+        "l                                                r",
+        "l  e                                  e          r",
+        "l                           e      wwwwwwwwwwwwwwr",
+        "l                                  e             r",
+        "l         e           f                          r",
+        "l                                         f      r",
+        "l                           f                    r",
+        "l f                                              r",
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"];
+
+
+
+
+//-------Creating the objects for the game-------//
+//creating the fruit object
+var fruitObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.drawMe = true;
+};
+
+//creating the wall object
+var wallObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    
+};
+
+//cerating the enemy object
+var enemyObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.moveSpeed = 1;
+    this.killed = false;
+    this.rotateAngle = random(0, 2*pi);
+    
+};
+
+//creating the player object
+var playerObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.moveSpeed = 8;
+    this.rotateAngle = 0;
+};
+
+//creating the bullet object that will be used to shoot enchanted fruits
+var bulletObj = function() {
+    this.x = 0;
+    this.y = 0;
+    this.fired = false;
+    this.angle = 0;
+    this.speed = 5;
+};
+
+//creating the border objects keep everything within the playing field
+var borderBottomObj = function(x, y) {
+    //imaginary ara of 20x20
+    this.x = x;
+    this.y = y;
+};
+//creating the border object keep everything within the playing field
+var borderTopObj = function(x, y) {
+    //imaginary ara of 20x20
+    this.x = x;
+    this.y = y;
+};
+
+//creating the border object keep everything within the playing field
+var borderLeftObj = function(x, y) {
+    //imaginary ara of 20x20
+    this.x = x;
+    this.y = y;
+};
+
+//creating the border object keep everything within the playing field
+var borderRightObj = function(x, y) {
+    //imaginary ara of 20x20
+    this.x = x;
+    this.y = y;
+};
+
+
+
+
+//-------Initializing the objects for the game-------//
+var images = [];                    //holds the custom image for the walls
+var borderBottom = [];              //holds all the border bottom objects
+var borderTop = [];                 //holds all the border top objects
+var borderLeft = [];                //holds all the border left objects
+var borderRight = [];               //holds all the border right objects
+var fruits = [];                    //holds all the fruits when we initialize them        
+var walls = [];                     //holds all the walls when we initialize them
+var enemies = [];                   //holds all the enemies when we initialize them
+var player = new playerObj(10*20,10*20);     //creates a player object at starting location
+var playerCurrentX = 200;
+var playerCurrentY = 200;
+var keyArray = [];                          //creates the keyArry for key presses
+var gameOver = false;                       //game over variable
+var youWin = false;                         //win variable
+var score = 0;                              //keeps track of the score
+var gameStart = false;                      //keeps track of when the game starts
+var currentFrameCount = 0;
+
+var transparency = 1;                       //transparency for Game Over and win background
+var enemyTrans = 1;                         //transparency for enemies at Game Over screen
+var fruitTrans = 1;                         //transparency for fruits at Win screen
+
+var bulletIndex = 0;
+var bullets = [];
+
+//initializing the size bullets you can use
+for(var i = 0; i < 6; i++) {
+    bullets.push(new bulletObj());
+}
+
+//-------All the draw functions for the objects-------//
+//handles drawing the fruits
+fruitObj.prototype.draw = function() {
+    fill(255, 122, 0);
+    ellipse(this.x, this.y, 20, 19);
+    fill(0,255,0);
+    ellipse(this.x+2,this.y-8,8,4);
+};
+
+//handles drawing the walls
+wallObj.prototype.draw = function() {
+    //gets image I captured from the canvas at the beginning of the program (custom image)
+    image(images[0],this.x,this.y,20,20);
+};
+
+//handles drawing the four corder objects
+borderBottomObj.prototype.draw = function() {
+    fill(255,255,255);
+    rect(this.x, this.y, 20, 20);
+};
+borderTopObj.prototype.draw = function() {
+    fill(255,255,255);
+    rect(this.x, this.y, 20, 20);
+};
+borderLeftObj.prototype.draw = function() {
+    fill(255,255,255);
+    rect(this.x, this.y, 20, 20);
+};
+borderRightObj.prototype.draw = function() {
+    fill(255,255,255);
+    rect(this.x, this.y, 20, 20);
+};
+
+//handles drawing the enemy objects
+enemyObj.prototype.draw = function() {
+    pushMatrix();
+    translate(this.x,this.y);
+    rotate(this.rotateAngle);
+     fill(255,0,0);
+     ellipse(0, 0, 20, 20);
+     fill(0,0,0);
+     ellipse(5, -6,4,4);
+     rect(-1, -10, 2, 2);
+     rect(-10, 0, 20, 3);
+     rect(-9, 3, 18, 3);
+     rect(-6, 6, 12, 3);
+     ellipse(-5, -6, 4, 4); 
+     rect(-7, -4,6,2);
+     rect(1, -4,6,2);
+     rect(8, -9, 2, 8);
+     rect(-10, -9, 2,8);
+     //rect(this.x+4, this.y+4,2,6);
+     //rect(this.x-6, this.y+4,2,6);
+     popMatrix();
+};
+
+//handles drawing the player obejct to the screen facing front
+playerObj.prototype.draw = function() {
+    pushMatrix();
+    translate(this.x,this.y);
+    rotate(this.rotateAngle);
+    fill(0,0,255);
+    //ellipse(this.x, this.y, 20, 20);
+    
+    noStroke();
+    fill(0,0,0);
+    rect(-6,-10,4,8);
+    rect(2,-10,4,8);
+    fill(0,0,255);
+    rect(-10,-10,20,2);
+    fill(0,0,255);
+    rect(-9,-2,18,12);
+    fill(0,0,0);
+    rect(-10,-2,3,4);
+    rect(-10,6,3,4);
+    rect(7,-2,3,4);
+    rect(7,6,3,4);
+    
+    popMatrix();
+};
+
+//function to draw the bullets to the screen
+bulletObj.prototype.draw = function() {
+    pushMatrix();
+    translate(this.x,this.y);
+    rotate(this.angle);
+    fill(0, 255, 255);
+    ellipse(cos(this.angle+(pi/2)), sin(this.angle+(pi/2))-12, 4, 8);
+
+    //what to do if the bullet goes off the screen
+    if((this.y < 0) || (this.y > 400) || (this.x < 0) || (this.x > 400)) {
+        this.fired = false;
+    }
+    popMatrix();
+    
+};
+
+//draws in the tilemap background objects
+var drawBackground = function() {
+    
+    for(var i = 0; i<walls.length; i++) {
+        walls[i].draw();
+    }
+    for(var i = 0; i<fruits.length; i++) {
+        if(fruits[i].drawMe) {
+            fruits[i].draw();
+        }
+    }
+    for(var i = 0; i<enemies.length; i++) {
+        if(enemies[i].killed === false) {
+            enemies[i].draw();
+        }
+    }
+    
+    for(var i = 0; i < borderBottom.length; i++) {
+        borderBottom[i].draw();
+    }
+    
+    for(var i = 0; i < borderTop.length; i++) {
+        borderTop[i].draw();
+    }
+    
+    for(var i = 0; i < borderLeft.length; i++) {
+        borderLeft[i].draw();
+    }
+    
+    for(var i = 0; i < borderRight.length; i++) {
+        borderRight[i].draw();
+    }
+    
+};
+
+
+
+//-------handling move functions-------//
+//this function will handle movement of the player and repositioning the background to      // compensate for the players movements
+playerObj.prototype.move = function() {
+    //hanldes moving the background if the player moves forward (w === 87)
+    if(keyArray[87] === 1) {
+        for(var i = 0; i < walls.length; i++) {
+            walls[i].y+=sin(this.rotateAngle + (pi/2))*this.moveSpeed;
+            walls[i].x+=cos(this.rotateAngle + (pi/2))*this.moveSpeed;
+        }
+        for(var i = 0; i < fruits.length; i++) {
+            fruits[i].y+=sin(this.rotateAngle + (pi/2))*this.moveSpeed;
+            fruits[i].x+=cos(this.rotateAngle + (pi/2))*this.moveSpeed;
+        }
+        for(var i = 0; i < enemies.length; i++) {
+            enemies[i].y+=sin(this.rotateAngle + (pi/2))*this.moveSpeed;
+            enemies[i].x+=cos(this.rotateAngle + (pi/2))*this.moveSpeed;
+        }
+        for(var i = 0; i < borderBottom.length; i++) {
+            borderBottom[i].y+=sin(this.rotateAngle + (pi/2))*this.moveSpeed;
+            borderBottom[i].x+=cos(this.rotateAngle + (pi/2))*this.moveSpeed;
+        }
+        for(var i = 0; i < borderTop.length; i++) {
+            borderTop[i].y+=sin(this.rotateAngle + (pi/2))*this.moveSpeed;
+            borderTop[i].x+=cos(this.rotateAngle + (pi/2))*this.moveSpeed;
+        }
+        for(var i = 0; i < borderLeft.length; i++) {
+            borderLeft[i].y+=sin(this.rotateAngle + (pi/2))*this.moveSpeed;
+            borderLeft[i].x+=cos(this.rotateAngle + (pi/2))*this.moveSpeed;
+        }
+        for(var i = 0; i < borderRight.length; i++) {
+            borderRight[i].y+=sin(this.rotateAngle + (pi/2))*this.moveSpeed;
+            borderRight[i].x+=cos(this.rotateAngle + (pi/2))*this.moveSpeed;
+        }
+    }
+    //handles moving the background if the player move bavkwards (s === 83)
+    if(keyArray[83] === 1) {
+        for(var i = 0; i < walls.length; i++) {
+            walls[i].y+=-sin(this.rotateAngle + (pi/2))*this.moveSpeed;
+            walls[i].x+=-cos(this.rotateAngle + (pi/2))*this.moveSpeed;
+        }
+        for(var i = 0; i < fruits.length; i++) {
+            fruits[i].y+=-sin(this.rotateAngle + (pi/2))*this.moveSpeed;
+            fruits[i].x+=-cos(this.rotateAngle + (pi/2))*this.moveSpeed;
+        }
+        for(var i = 0; i < enemies.length; i++) {
+            enemies[i].y+=-sin(this.rotateAngle + (pi/2))*this.moveSpeed;
+            enemies[i].x+=-cos(this.rotateAngle + (pi/2))*this.moveSpeed;
+        }
+        for(var i = 0; i < borderBottom.length; i++) {
+            borderBottom[i].y-=sin(this.rotateAngle + (pi/2))*this.moveSpeed;
+            borderBottom[i].x-=cos(this.rotateAngle + (pi/2))*this.moveSpeed;
+        }
+        for(var i = 0; i < borderTop.length; i++) {
+            borderTop[i].y-=sin(this.rotateAngle + (pi/2))*this.moveSpeed;
+            borderTop[i].x-=cos(this.rotateAngle + (pi/2))*this.moveSpeed;
+        }
+        for(var i = 0; i < borderLeft.length; i++) {
+            borderLeft[i].y-=sin(this.rotateAngle + (pi/2))*this.moveSpeed;
+            borderLeft[i].x-=cos(this.rotateAngle + (pi/2))*this.moveSpeed;
+        }
+        for(var i = 0; i < borderRight.length; i++) {
+            borderRight[i].y-=sin(this.rotateAngle + (pi/2))*this.moveSpeed;
+            borderRight[i].x-=cos(this.rotateAngle + (pi/2))*this.moveSpeed;
+        }
+        //keep track of where the player is
+        playerCurrentX+=-cos(this.rotateAngle + (pi/2))*this.moveSpeed;
+        playerCurrentY+=-sin(this.rotateAngle + (pi/2))*this.moveSpeed;
+    }
+    //handles rotating the player left
+    if(keyArray[65] === 1) {
+        this.rotateAngle-=2*(pi/180);
+    }
+    //handles rotating the player right
+    if(keyArray[68] === 1) {
+        this.rotateAngle+=2*(pi/180);
+    }
+    
+    for(var i = 0; i < borderBottom.length; i++) {
+        if(this.y+10 > borderBottom[i].y) {
+            this.rotateAngle+=pi/2;
+        }
+    }
+    for(var i = 0; i < borderTop.length; i++) {
+        if(this.y-20 < borderTop[i].y-20) {
+            this.rotateAngle+=pi/2;
+        }
+    }
+    for(var i = 0; i  < borderLeft.length; i++) {
+        if(this.x-10 < borderLeft[i].x+20) {
+            this.rotateAngle+=pi/90;
+        }
+    }
+    for(var i = 0; i  < borderRight.length; i++) {
+        if(this.x+10 > borderRight[i].x) {
+            this.rotateAngle+=pi/90;
+        }
+    }
+    
+    for(var i = 0; i < walls.length; i++) {
+        if((this.y+10 > walls[i].y) && (this.y-20 < walls[i].y) && (this.x-10 < walls[i].x+20) && (this.x+10 > walls[i].x)) {
+            this.rotateAngle+=pi/2;
+        }
+    }
+    
+    
+    
+};
+
+
+//handles moving the enemy (enemy NPC's movement stuff)
+//also handles collisions for the enemies in this function
+enemyObj.prototype.move = function() {
+    this.x+=-cos(this.rotateAngle + (pi/2))*this.moveSpeed;
+    this.y+=-sin(this.rotateAngle + (pi/2))*this.moveSpeed;
+    
+    for(var i = 0; i < walls.length; i++) {
+        if((this.x-50 < walls[i].x+20) && (this.x+50 > walls[i].x) && (this.y-50 < walls[i].y+20) && (this.y+50 > walls[i].y)){
+            this.rotateAngle+=pi/270;
+        }
+    }
+    
+    for(var i = 0; i < borderBottom.length; i++) {
+        if(this.y > borderBottom[i].y) {
+            this.y-=1000;
+        }
+    }
+    
+    for(var i = 0; i < borderTop.length; i++) {
+        if(this.y < borderTop[i].y-20) {
+            this.y+=1000;
+        }
+    }
+    
+    for(var i = 0; i < borderLeft.length; i++) {
+        if(this.x < borderLeft[i].x+20) {
+            this.x+=1000;
+        }
+    }
+    for(var i = 0; i < borderRight.length; i++) {
+        if(this.x > borderRight[i].x) {
+            this.x-=1000;
+        }
+    }
+    
+};
+
+//handles moving the bullets accross the scree
+bulletObj.prototype.move = function() {
+    this.x+=cos(this.angle-(pi/2))*this.speed;
+    this.y+=sin(this.angle-(pi/2))*this.speed;
+};
+
+
+//-------Collision checking-------//
+bulletObj.prototype.checkCollisions = function() {
+    var self = this; 
+    
+    //checking for collisions with enemies
+    for(var i = 0; i < enemies.length; i++) {
+        if(enemies[i].killed === false) {
+        if((self.x < enemies[i].x+10) && (self.x > enemies[i].x-10) && (self.y > enemies[i].y-10) && (self.y < enemies[i].y+10)) {
+                self.fired = false;
+                enemies[i].killed = true;
+            }
+        }
+    }
+};
+
+
+playerObj.prototype.checkCollisions = function() {
+    //collision checking with enemies
+    for(var i = 0; i < enemies.length; i++) {
+        if((this.x-10 < enemies[i].x+10) && (this.x+10 > enemies[i].x-10) && (this.y-10 < enemies[i].y+10) && (this.y+10 > enemies[i].y-10) && (enemies[i].killed === false)) {
+            gameOver = true;
+        }
+    }
+    
+    //collision checking with fruits
+    for(var i = 0; i < fruits.length; i++) {
+        if((this.x-10 < fruits[i].x+10) && (this.x+10 > fruits[i].x-10) && (this.y-10 < fruits[i].y+10) && (this.y+10 > fruits[i].y-10) && (fruits[i].drawMe === true)) {
+            score++;
+            fruits[i].drawMe = false;
+        }
+    }
+    
+    /*
+    //collision checking with walls
+    for(var i = 0; i < walls.length; i++) {
+        if((this.x-10 < walls[i].x+20) && (this.x+10 > walls[i].x) && (this.y-10 < walls[i].y+20) && (this.y+10 > walls[i].y)) {
+            this.x+=+cos(this.rotateAngle + (pi/2))*this.moveSpeed;
+            this.y+=+sin(this.rotateAngle + (pi/2))*this.moveSpeed;
+        }
+    }
+    */
+};
+
+
+
+//-------Handling checking if a bullet has been fired-------//
+//determines if the spacebar was pressed and when the bullet should be fired on screen
+var checkFire = function() {
+    if(keyArray[32] === 1) {
+        if(currentFrameCount < (frameCount - 7)) {
+            currentFrameCount = frameCount;
+            bullets[bulletIndex].fired = true;
+            bullets[bulletIndex].x = player.x;
+            bullets[bulletIndex].y = player.y;
+            bullets[bulletIndex].angle = player.rotateAngle;
+            bulletIndex++;
+            if(bulletIndex > 5) {
+                bulletIndex = 0;
+            }
+        }
+        
+    }
+};
+
+
+
+//-------Initializing functions-------//
+//initialize the custom image for the walls
+var initImages = function() {
+    fill(138, 137, 128);
+    noStroke();
+
+    rect(0,0,400,200);
+    rect(0,200,400,400);
+    fill(0,0,0);
+    rect(0,0,400,10);
+    rect(0,180,400,20);
+    rect(190,200,10,200);
+    rect(0,0,10,200);
+    rect(390,0,10,200);
+    rect(0,390,400,10);
+    
+    images.push(get(0,0,width,height));
+    background(255,255,255);
+};
+
+//initialize the tilemap for gameplay
+//initialized to start in the bottom left corner of the tilemap
+var initTilemap = function() {
+    for (var i = 0; i< tilemap.length; i++) {
+        for (var j =0; j < tilemap[i].length; j++) {
+            switch (tilemap[i][j]) {
+                case 'f': fruits.push(new fruitObj(j*20, i*20-600));
+                    break;
+                case 'w': walls.push(new wallObj(j*20, i*20-600));
+                    break;
+                case 'e': enemies.push(new enemyObj(j*20, i*20-600));
+                    break;
+                case 'b': borderBottom.push(new borderBottomObj(j*20, i*20-600));
+                    break;
+                case 't': borderTop.push(new borderTopObj(j*20, i*20-600));
+                    break;
+                case 'l': borderLeft.push(new borderLeftObj(j*20, i*20-600));
+                    break;
+                case 'r': borderRight.push(new borderRightObj(j*20, i*20-600));
+                    break;
+            }
+        }
+    }
+};
+
+initImages();
+initTilemap();
+
+
+
+//-------handle key presses-------//
+//determines the value for if a key was pressed will be 1
+var keyPressed = function() {
+    keyArray[keyCode] = 1;
+};
+
+//determines the value for if a key was released will be 0
+var keyReleased = function() {
+    keyArray[keyCode] = 0;
+};
+
+
+
+//-------Main draw loop for the game-------//
+//main draw loop that runs over and over
+var draw = function() {
+    //commented out for development purposes (will uncomment closer to finishing the project
+    if(gameStart === false) {
+        
+        background(200, 200, 200);
+        
+        //instructions text
+        fill(0,255,0);
+        textSize(50);
+        text("Fruit Rescuer 2", 35, 80);
+        textSize(30);
+        fill(255, 122, 0);
+        text("How To Play", 40, 130);
+        textSize(20);
+        text("You are a Fruit Rescuer trying to rescue \nfruits from evil from fruit eaters! You \nmust collect all 20 fruits to win! Watch \n out for the guards, if they catch you \nthen its Game Over!",40,150);
+        
+        textSize(30);
+        text("Controls", 40, 280);
+        textSize(15);
+        text("Move Forward = w\nTurn Left = a\nMove Backwards = s\nTurn Right = d\nShoot = space bar", 40, 300);
+        
+        if(((frameCount % 50) !== 0) && ((frameCount % 50) !== 1) && ((frameCount % 50) !==             2)) {
+            fill(0, 255, 0);
+            textSize(13);
+            text("click on the game screen to start!", 130, 390);
+        }
+        
+        //starts the game if the user click the screen
+        gameStart = true;
+    }
+    
+    //starts the game if the game start variable is true
+    else if(gameStart === true) {
+        if((gameOver === false) && (youWin === false)) {
+            background(200, 200, 200);
+            
+            //draw the background
+            drawBackground();
+            
+            //fix this at the end
+            /*
+            textSize(20);
+            text(playerCurrentX, 100,100);
+            text(playerCurrentY, 200,100);
+            */
+            
+            //draw the player
+            player.draw();
+            player.move();
+            player.checkCollisions();
+            
+            //draw the bullets to the screen that have been fired
+            checkFire();
+            for(var i = 0; i < 6; i++) {
+                if(bullets[i].fired === true) {
+                    bullets[i].draw();
+                    bullets[i].move();
+                    bullets[i].checkCollisions();
+                }
+            }
+            
+            //enemies are drawn already in drawBackground
+            //this function simply moves the enemies
+            for(var i = 0; i < enemies.length; i++) {
+                if(enemies[i].killed === false) {
+                    enemies[i].move();
+                }
+            }
+            
+            
+            //determine if the palyer has won
+            //reason its set at 21 is so the normal game will run one more time 
+            //to get rid of the last fruit 
+            if(score === 21) {
+                youWin = true;
+            }
+            if(score === 20) {
+                score++;
+            }
+        }
+    }
+};

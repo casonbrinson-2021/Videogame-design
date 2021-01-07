@@ -1,0 +1,629 @@
+/* 
+ * projectFour.txt
+ * 
+ * Author: Gregory Cason Brinson
+ * Assignment: Project 4 - Doodle Pac Jump
+ * Created: 9/27/20
+ * Last Edited: 9/29/20
+ * Honor Code: "I did not break the honor code on this assignment" - Gregory Cason Brinson
+*/ 
+
+
+//setting the angle mode and defining pi for use int he program with rotations
+angleMode = "radians";
+var pi = Math.PI;
+
+
+//Creating the tilemap object to use for the game starting platform positions
+var tilemap = [
+                "p         ",
+                "     p  f ",
+                "e        p",
+                "p         ",
+                "         p",
+                "  p       ",
+                " f     p  ",
+                "   p   e  ",
+                "p         ",
+                "        p ",
+                "   p      ",
+                "      p   ",
+                "p  e      ",
+                "     f   p",
+                "   p      ",
+                "       p  ",
+                "p   p     ",
+                "        p ",
+                "   p      ",
+                "       p  ",
+                " p        ",
+                "      p   ",
+                "         p",
+                " p        ",
+                "      p   ",
+                "   p      ",
+                "        p ",
+                "p e  p   f",
+                "       p  ",
+                "   p      ",
+                "      p   ",
+                " p        ",
+                "        e ",
+                "f        p",
+                " p        ",
+                "    p     ",
+                "p         ",
+                "       p  ",
+                "          ",
+                "        p"];
+
+
+
+//-------Creating the necessary game objects-------//
+//creates the player object
+var playerObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.state = 0;     //falling = 0, rising = 1, on platform = 2
+    this.fallingAcceleration = 0.5;
+    this.jumpingAcceleration = 10;
+    this.speed = 0;                 //postive for falling and negative for jumping up(weird)
+    this.empowered = false;
+    this.strong = false;
+    
+    this.moveLeft = 0;
+    this.moveRight = 0;
+    this.jump = 0;
+    
+    this.currentPlatform = -1;
+    this.facing = -6;
+};
+
+//creates the platform object that will be used as the jumping platforms for the player
+var platformObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.oldX = 0;
+};
+
+//creates the fruit obejct that will be collected by the player
+var fruitObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.drawMe = true;
+};
+
+var powerObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.drawMe = true;
+};
+
+//creates the enemy object that will try to get the player
+var enemyObj = function(x, y) {
+    this.drawMe = true;
+    this.state = 0;      //floating around = 0, chasing = 1, avoiding = 2
+    
+    this.position = new PVector(x, y);
+    this.step = new PVector(0, 0);
+    this.wanderAngle = random(0, pi);
+    this.wanderDist = random(70*(pi/180), 100*(pi/180));
+    
+};
+
+
+
+//-------Drawing functions for various objects-------//
+//used to draw the player to the screen
+playerObj.prototype.draw = function() {
+    if((this.empowered === false) && (this.strong === false)) {
+        fill(0,200,255);
+        rect(this.x, this.y, 20, 22);
+        stroke(0,0,0);
+        line(this.x+1, this.y+22,this.x+1,this.y+25);
+        line(this.x+5, this.y+22,this.x+5,this.y+25);
+        line(this.x+10, this.y+22,this.x+10,this.y+25);
+        line(this.x+15, this.y+22,this.x+15, this.y+25);
+        line(this.x+18, this.y+22,this.x+18, this.y+25);
+        
+        noStroke();
+        fill(0,0,0);
+        //face
+        ellipse(this.x+10+this.facing, this.y+7, 4, 4);
+        rect(this.x+5+this.facing, this.y+12, 10, 3);
+        
+    }
+    else if(this.empowered && (this.strong === false)) {
+        noStroke();
+        var r = random(10,245);
+        var g = random(10,245);
+        var b = random(10,245);
+        fill(r,g,b);
+        rect(this.x, this.y, 20, 22);
+        stroke(0,0,0);
+        line(this.x+1, this.y+22,this.x+1,this.y+25);
+        line(this.x+5, this.y+22,this.x+5,this.y+25);
+        line(this.x+10, this.y+22,this.x+10,this.y+25);
+        line(this.x+15, this.y+22,this.x+15, this.y+25);
+        line(this.x+18, this.y+22,this.x+18, this.y+25);
+        noStroke();
+        fill(0,0,0);
+        //face
+        ellipse(this.x+10+this.facing, this.y+7, 4, 4);
+        rect(this.x+5+this.facing, this.y+12, 10, 3);
+    }
+    else if(this.strong) {
+        fill(0,0,0);
+        rect(this.x, this.y, 20, 22);
+        stroke(0,0,0);
+        line(this.x+1, this.y+22,this.x+1,this.y+25);
+        line(this.x+5, this.y+22,this.x+5,this.y+25);
+        line(this.x+10, this.y+22,this.x+10,this.y+25);
+        line(this.x+15, this.y+22,this.x+15, this.y+25);
+        line(this.x+18, this.y+22,this.x+18, this.y+25);
+        
+        noStroke();
+        fill(255,255,255);
+        //face
+        ellipse(this.x+10+this.facing, this.y+7, 4, 4);
+        rect(this.x+5+this.facing, this.y+12, 10, 3);
+    }
+
+};
+   
+//Used to draw a platform to the screen   
+platformObj.prototype.draw = function() {
+    noStroke();
+    fill(32, 189, 21);
+    rect(this.x, this.y, 40, 10);
+    
+};
+
+//used to draw a fruit obejct to the screen
+fruitObj.prototype.draw = function() {
+    noStroke();
+    fill(255, 122, 0);
+    ellipse(this.x, this.y, 20, 19);
+    fill(0,255,0);
+    ellipse(this.x+2,this.y-8,8,4);
+    
+};
+
+powerObj.prototype.draw = function() {
+    stroke(0,0,0);
+    fill(255,255,0);
+    ellipse(this.x,this.y, 20,16);
+    fill(0,255,0);
+    ellipse(this.x+2,this.y-7,8,4);
+};
+
+//used to draw an enemy object to the screen
+enemyObj.prototype.draw = function() {
+    noStroke();
+    fill(255,0,0);
+    //ghost body
+    ellipse(this.position.x, this.position.y, 16,16);
+    rect(this.position.x-8, this.position.y, 16,10);
+    
+    //ghose hanging triangles
+    triangle(this.position.x-8,this.position.y+10,this.position.x-3,this.position.y+10,this.position.x-5.5,this.position.y+18);
+    triangle(this.position.x-3,this.position.y+10,this.position.x+2,this.position.y+10,this.position.x-0.5,this.position.y+18);
+    triangle(this.position.x+3,this.position.y+10,this.position.x+8,this.position.y+10,this.position.x+5.5,this.position.y+18);
+    
+    //ghost facial features
+    fill(0,0,0);
+    ellipse(this.position.x-4,this.position.y,4,4);
+    ellipse(this.position.x+4,this.position.y,4,4);
+    ellipse(this.position.x,this.position.y+6,10,4);
+};
+
+
+//-------Initializing the game objects and variables-------//
+var player = new playerObj(170, 200);       //the player
+var platforms = [];                         //array of platforms
+var fruits = [];                            //array of fruits
+var powerUp = new powerObj(200,15);         //a powerup object
+var enemies = [];                           //array of enemy objects
+var gameStart = false;                      //starts the game when true
+var gameOver = false;                       //determines if the game is over or not
+var gameWon = false;                        //determines if the player has won or not
+var score = 0;                              //keeps track of how many fruits player has got
+var platformMoveSpeed = 0.4;                //the speed at which the platforms move down
+var count = 0;                              //keeps track of the time ellapsed from empower
+var count2 = 0;
+
+var alphaVal = 0; //keeps track of the alpha value for background transparency
+var timer = 0.0;
+
+//-------Moving functions-------//
+//handles moving the player and gravity and all that
+playerObj.prototype.move = function() {
+    var self = this;
+
+    //falling state
+    if(self.state === 0) {
+        self.y+=self.speed;
+        self.speed+=self.fallingAcceleration;
+        
+        for(var i = 0; i < platforms.length; i++) {
+            if((self.y+25 > platforms[i].y) && (self.y+25 < platforms[i].y+10) && (self.x < platforms[i].x+40) && (self.x+20 > platforms[i].x)) {
+                self.state = 2;
+                self.currentPlatform = i;
+                self.y = platforms[i].y-25;
+                self.speed = 0;
+            }
+        }
+    }
+    
+    //rising state
+    if(self.state === 1) {
+        self.y-=self.speed;
+        self.speed-=self.fallingAcceleration;
+        
+        if(self.speed < 0) {
+            self.state = 0;
+            self.speed = 0;
+        }
+    }
+    
+    //on a platform state
+    if(self.state === 2) {
+        self.y+=platformMoveSpeed;
+
+        if(self.jump === 1) {
+            self.speed = self.jumpingAcceleration;
+            self.state = 1;
+        }
+        
+        if((self.x+20 < platforms[self.currentPlatform].x) || (self.x > platforms[self.currentPlatform].x+40)) {
+            self.state = 0;
+        }
+    }
+    
+    //handles moving the player left and right
+    if(self.moveLeft === 1) {
+        self.x-=3;
+        if(self.facing > 0) {
+            self.facing = self.facing*-1;
+        }
+    }
+    if(self.moveRight === 1) {
+        self.x+=3;
+        if(self.facing < 0) {
+            self.facing = self.facing*-1;
+        }
+    }
+    
+    //check if the player has hit the bottom border to end the game
+    if(self.y+25 > 400) {
+        gameOver = true;
+    }
+    //keep the player in bounds
+    if(self.x < 0) {
+        self.x = 0;
+    }
+    if(self.x+20 > 400) {
+        self.x = 380;
+    }
+    if(self.y < 0) {
+        self.y = 0;
+        self.state = 0;
+        self.speed = 0;
+    }
+    
+    //handles collission checking with the fruits in the game
+    for(var i = 0; i < fruits.length; i++) {
+        if((self.y+25 > fruits[i].y-10) && (self.y < fruits[i].y+10) && (self.x < fruits[i].x+10) && (self.x+20 > fruits[i].x-10) && (fruits[i].drawMe === true)) {
+            fruits[i].drawMe = false;
+            self.empowered = true;
+            count = 0;
+            score++;
+        }
+    }
+    
+    //handles collisoin checking with enemies in the game
+    for(var i = 0; i < enemies.length; i++) {
+        if((self.y+25 > enemies[i].position.y-8) && (self.y < enemies[i].position.y+21) && (self.x < enemies[i].position.x+8) && (self.x+20 > enemies[i].position.x-8) && enemies[i].drawMe === true) {
+            if(self.empowered === false && self.strong === false) {
+                gameOver = true;
+            }
+            if(self.strong === true) {
+                enemies[i].drawMe = false;
+            }
+        }
+    }
+    
+    //handles collission checking with the the powerup in the game
+    if((self.y+25 > powerUp.y-10) && (self.y < powerUp.y+10) && (self.x < powerUp.x+10) && (self.x+20 > powerUp.x-10) && (powerUp.drawMe === true)) {
+            ellipse(200,200,20,20);
+            powerUp.drawMe = false;
+            self.strong = true;
+            count2 = 0;
+        }
+    
+    
+};
+
+//this function handles the movement of the platforms down the screen
+platformObj.prototype.move = function() {
+    //if the platform goes beyond the bottom border
+     
+     //change the x position of the platforms
+    if(this.y > 400) {
+        this.y = -10;
+        this.x = round(random(0, 10))*40;
+    }
+    
+    //move the platforms
+    this.y+=platformMoveSpeed;
+};
+
+//enemy object floating around
+enemyObj.prototype.float = function() {
+    this.step.set(cos(this.wanderAngle), sin(this.wanderAngle));
+    this.position.add(this.step);
+    this.wanderAngle += random(-15*(pi/180), 15*(pi/180));
+    
+    this.wanderDist--;
+    if (this.wanderDist < 0) {
+        this.wanderDist = random(70, 100);
+        this.wanderAngle += random(-pi/2, pi/2);
+    }
+    
+    //keep the ghosts in bounds while wandering around
+    if (this.position.x > 392) {
+        this.position.x = 392;
+        this.wanderAngle*=-1;
+    }
+    else if (this.position.x < 8) {
+        this.position.x = 8;
+        this.wanderAngle*=-1;
+    }
+    if (this.position.y > 379) {
+        this.position.y = 379;
+        this.wanderAngle*=-1;
+    }
+    else if (this.position.y < 8) {
+        this.position.y = 8;
+        this.wanderAngle*=-1;
+    }
+            
+};
+
+//enemy object chasing the player
+enemyObj.prototype.chase = function() {
+    this.step.set(player.x - this.position.x, player.y - this.position.y);
+    this.step.normalize();
+    
+    this.angle = this.step.heading() + 90;
+    this.position.x += this.step.x;
+    this.position.y += this.step.y;
+};
+
+//enemy object chasing the player
+enemyObj.prototype.avoid = function() {
+    this.step.set(player.x - this.position.x, player.y - this.position.y);
+    this.step.normalize();
+
+    this.angle = this.step.heading() + 90;
+    this.position.x -= this.step.x;
+    this.position.y -= this.step.y;
+    
+    //keep the ghost in the game bounds
+    if (this.position.x > 392) {this.position.x = 392;}
+    else if (this.position.x < 8) {this.position.x = 8;}
+    if (this.position.y > 379) {this.position.y = 379;}
+    else if (this.position.y < 8) {this.position.y = 8;}
+    
+};
+
+//enemy object movement by changing state
+enemyObj.prototype.move = function() {
+    //chase the player is the player is in range of the ghost
+    if ((dist(this.position.x, this.position.y, player.x, player.y) < 120 ) && (player.empowered === false) && (player.strong === false)) {
+                this.chase();
+            }
+    //avoid the player if the ghosts see the player empowered
+    else if ((dist(this.position.x, this.position.y, player.x, player.y) < 120 ) && (player.empowered === true)) {
+                this.avoid();
+            }
+    //float around if the ghosts don't see the player
+    else if ((dist(this.position.x, this.position.y, player.x, player.y) > 120 ) && (player.empowered === true)) {
+                this.float();
+        }
+    //float around if the ghosts don't see the player and the palyer isnt empowered
+    else if ((dist(this.position.x, this.position.y, player.x, player.y) > 120 ) && (player.empowered === false)) {
+                this.float();
+        }
+    //float around if the ghosts don't see the player and the palyer isnt empowered
+    else if ((dist(this.position.x, this.position.y, player.x, player.y) > 120 ) && (player.strong === false)) {
+                this.float();
+        }
+        //float around if the ghosts don't see the player and the palyer isnt empowered
+    else if ((dist(this.position.x, this.position.y, player.x, player.y) < 120 ) && (player.strong === true)) {
+                this.avoid();
+        }
+    
+    
+};
+
+
+
+//-------Initialization functions-------//
+var initTilemap = function() {
+    for(var i = 0; i < tilemap.length; i++) {
+        for(var j = 0; j < tilemap.length/4; j++) {
+            switch(tilemap[i][j]) {
+                case 'p': platforms.push(new platformObj(j*40, i*10));
+                    break;
+                case 'f': fruits.push(new fruitObj((j*40)+10, i*10));
+                    break;
+                case 'e': enemies.push(new enemyObj((j*40)+10, i*10));
+                    break;
+                    
+            }
+        }
+    }
+};
+
+
+//-------Keycode functions to keep track of keys pressed-------//
+var keyPressed = function() {
+    // if the user presses 'd' or RIGHT ARROW 
+    if ((keyCode === 68) || (keyCode === RIGHT)) {
+            player.moveRight = 1;
+    }
+    //if the user presses 'a' or LEFT ARROW
+    if ((keyCode === 65) || (keyCode === LEFT)) {
+            player.moveLeft = 1;
+    }
+    //if the user presses 'w' or UP ARROW
+    if ((keyCode === 87) || (keyCode === UP) && (player.jump === 0)) {
+            player.jump = 1;
+    }
+};
+
+var keyReleased = function() {
+    if ((keyCode === 68) || (keyCode === RIGHT)) {
+            player.moveRight = 0;
+    }
+    else if ((keyCode === 65) || (keyCode === LEFT)) {
+            player.moveLeft = 0;
+    }
+    else if ((keyCode === 87) || (keyCode === UP)) {
+        player.jump = 0;
+    }
+};
+
+//handles the mouse stuff to start the game if the mouse is clicked
+mouseClicked = function() {
+    gameStart = true;
+};
+
+//initialize the tilemap for the start of the game
+initTilemap();
+
+//-------The main draw loop that runs constantly-------//
+var draw = function() {
+    
+    //instruction screen
+    if(gameStart === false) {
+        background(255,255,255);
+        fill(0,200,255);
+        textSize(35);
+        text("Doodle Pac Jump!", 35,35);
+        
+        fill(0,0,0);
+        textSize(14);
+        text("You are a jumper and are trying to rescue all the fruits \nfrom the ghosts! Watch out though, if a ghost sees you \nthen it will start to chase you! If you get caught by a ghost \nthen its Game Over! \n\nIf you collect a fruit you get a powerup that allows you to \nbe invinsible for 8 seconds. Use these wisely! If you collect\nthe lemon then you get a powerup that lets you kill ghosts\nwhen you touch them. This powerup lasts for only 3\nseconds.\nCollect all 5 fruits (oranges) to win the game!\n(try to finish as fast as you can!)", 35, 65);
+        fill(0,200,255);
+        textSize(35);
+        text("Controls", 35,280);
+        fill(0,0,0);
+        textSize(18);
+        text("jump = 'w' or UP ARROW\nmove left = 'a' or LEFT ARROW\nmove right = 'd' or RIGHT ARROW", 35, 305);
+        
+        fill(0,200,255);
+        textSize(14);
+        text("click screen to start", 120, 380);
+        
+        
+    }
+    
+    //the actual game
+    else {
+        //normal gameplay
+        if((gameOver === false) && (gameWon === false)) {
+            //draw the background
+            background(255,255,255);
+            
+            
+            timer++;
+            textSize(15);
+            text(timer/60, 345, 390);
+            
+            
+            
+            //draw the player
+            player.draw();
+            player.move();
+            if(player.empowered) {
+                count++;
+            }
+            if((count >= 480) && (player.empowered)) {
+                player.empowered = false;
+                count = 0;
+            }
+            if(player.strong) {
+                count2++;
+            }
+            if((count2 >= 180) && (player.strong)) {
+                player.strong = false;
+                count = 0;
+            }
+             
+            //draw the platforms
+            for(var i = 0; i < platforms.length; i++) {
+                
+                platforms[i].draw();
+                platforms[i].move();
+            }
+            
+            //draw the fruits to the screen
+            for(var i = 0; i < fruits.length; i++) {
+                if(fruits[i].drawMe) {
+                    fruits[i].draw();
+                }
+            }
+            
+            //draw the powerup to the screen
+            if(powerUp.drawMe) {
+                powerUp.draw();
+            }
+            
+            //draw the enemies to the screen
+            for(var i = 0; i < enemies.length; i++) {
+                if(enemies[i].drawMe) {
+                    enemies[i].draw();
+                    enemies[i].move();
+                }
+            }
+            
+            
+            if(score === 5) {
+                gameWon = true;
+            }
+            
+        }
+        //if the player loses
+        else if(gameOver) {
+            background(255,0,0, alphaVal);
+            alphaVal+=0.5;
+            fill(255,255,255);
+            textSize(50);
+            text("GAME OVER", 50,210);
+            textSize(30);
+            text("Score: ", 130, 250);
+            text(score, 230, 250);
+        }
+        //if the player wins
+        else if(gameWon) {
+            background(255,255,255);
+            
+            var r = random(10,255);
+            var g = random(10,255);
+            var b = random(10,255);
+            
+            fill(r,g,b);
+            textSize(50);
+            text("YOU WIN!", 80, 210);
+            textSize(20);
+            fill(0,0,0);
+            text("Time: ", 130, 250);
+            text(timer/60, 190, 250);
+            text(" s", 250, 250);
+            
+        }
+    }
+     
+};

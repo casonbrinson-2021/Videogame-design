@@ -1,0 +1,480 @@
+/* 
+ * Author: Gregory Cason Brinson
+ * Assignment: Project 1 - Enchanted Fruits Pong
+ * Last Edited: 9/11/20
+*/ 
+
+//-------Creating all the objects used in the game-------//
+
+//creating the fruit brick object and giving it x and y parameters for location
+var fruitBrickObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.hit = false;
+    this.destroyed = false;
+    this.moveSpeed = 0.5;
+};
+
+//the ball object that will be bouncing around the whole time. Given x and y parameters
+var ballObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.xDir = round(random(1,3));
+    this.yDir = round(random(1,3));
+    
+};
+
+//the paddle object that can move left and right. Only given an x parameter due to fixed y.
+var paddleObj = function(x) {
+    this.x = x;
+};
+
+//creating the bullet object that will be used to shoot enchanted fruits
+var bulletObj = function() {
+    this.x = 0;
+    this.y = 350;
+    this.fired = false;
+};
+
+//this creates a background star map for visual effects to make the game look better
+var starMapObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    
+};
+
+//this creates a squishy lemon map to look like lemons in the background of the game for
+//visual effects to also make the game look better
+var diskMapObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.width = 12;
+    this.height = 18;
+    this.addVal = 0.1;
+};
+
+
+//-------Initializing variables needed for game-------//
+
+var score = 0;                  //keep track of game score
+var gameStart = false;          //keep track of wether or not the game has started
+var gameOver = false;           //keeps track of if a game over condition has occurred
+var youWin = false;             //keeps track of if the player has won
+var paddle = new paddleObj(170);    //creating a single paddle object (the player)
+var ball = new ballObj(0, 170);     //creating a single ball object
+var keyArray = [];                  //key array used for key presses
+var currentFrameCount = 0;          //keeps track of current frame count
+
+var bulletIndex = 0;                //keeps track of which bullet is being used
+var bullets = [];                   //array of bullet objects (max of 6 bullets at a time)
+
+//initializing each of the ten bullet objects
+for (var i = 0; i < 6; i++) {
+    bullets[i] = new bulletObj();
+}
+
+var bricks = [];                //array of brick objects 
+var brickInitX = 20;            //initial x value for first brick drawn to screen
+var brickInitY = 30;            //initial y value for first brick drawn to screen
+
+//add in all the fruitBrickObj's that we need for the game in a grid pattern
+for(var i = 0; i < 3; i++) {
+    for(var j = 0; j < 10; j++) {
+        bricks.push(new fruitBrickObj(brickInitX, brickInitY));
+        brickInitX+=40;
+    }
+    brickInitX = 20;
+    brickInitY+=57;
+}
+
+//add in the starMapObj for this game's background visuals
+var starMap = [];
+var starX = 10;
+var starY = 10;
+for(var i = 0; i  < 50; i++) {
+    starMap.push(new starMapObj(starX, starY));
+    starX = random(10, 390);
+    starY = random(10, 390);
+}
+
+//add int he diskMapObj for this game's background visuals
+var diskMap = [];
+var diskX = 450;
+var diskY = -50;
+for(var i = 0; i < 10; i++) {
+    diskMap.push(new diskMapObj(diskX, diskY));
+    diskX+=random(50,250);
+    diskY-=random(200, 250);
+}
+
+
+
+//-------functions that handle drawing the obejcts to the screen-------//
+
+//function to draw the normal fruits to the screen
+fruitBrickObj.prototype.draw = function() {
+    
+    //drawing oranges as the bricks
+    noStroke();
+    fill(255, 122, 0);
+    ellipse(this.x, this.y, 32, 32);    //orange body
+    fill(0, 255, 0);
+    ellipse(this.x+2, this.y-16, 10, 6); //orange leaf
+    noFill();
+    stroke(0,0,0);
+    //rect(this.x-16, this.y-16,32,32);
+};
+
+//function to draw the enchanted fruits to the screen
+//also handles collisions between the enchanted fruits and the player and the bottom border
+fruitBrickObj.prototype.drawEnchanted = function() {
+    this.y = this.y + this.moveSpeed;
+    
+    //drawing oranges as the bricks
+    noStroke();
+    fill(123, 233, 250);
+    ellipse(this.x, this.y, 32, 32);    //orange body
+    fill(238, 143, 247);
+    ellipse(this.x+2, this.y-16, 10, 6); //orange leaf
+    noFill();
+    stroke(0,0,0);
+    //rect(this.x-16, this.y-16,32,32);
+    
+    //check to see if the enchanted fruit has touched the paddle or if it has gotten too low
+    //collision with bottom border
+    if(this.y+16 > 400) {
+        this.destroyed = true;
+    }
+    
+    //collision with the paddle
+    if((this.y+16 > 350) && (this.x+16 >= paddle.x) && (this.x-16 <= paddle.x+60)) {
+        gameOver = true;
+    }
+};
+
+//function to draw the paddle (player) to the screen
+paddleObj.prototype.draw = function() {
+    this.x = mouseX-30;
+    //drawing the player paddle
+    fill(0, 255, 255);
+    //stroke(0,0,0);
+    rect(this.x,350,60,10);
+    rect(this.x+20,360,20,10);
+    rect(this.x+25,370,10,10);
+    rect(this.x+27.5,380,5,10);
+    rect(this.x,360,10,15);
+    rect(this.x+50,360,10,15);
+};
+
+//function to draw the ball to the screen
+//Also check for collisions between the ball and the paddle on the screen
+ballObj.prototype.draw = function() {
+    fill(255, 255, 255);
+    //rect(this.x, this.y, 10, 10);
+    ellipse(this.x+5, this.y+5, 10, 10);
+    this.x+=this.xDir;
+    this.y+=this.yDir;
+    
+    //check to see if its colliding with the paddle
+    if((this.y+10 > 351) && (this.x+10 >= paddle.x) && (this.x <= paddle.x+60)) {
+        this.yDir = -round(random(1,3));
+    }
+    else if(this.y+10 > 354) {
+        gameOver = true;
+        this.xDir = 0;
+        this.yDir = 0;
+    }
+    //check to see if the ball is colliding with the right or right side of the screen
+    else if((this.x+10 >= 400) || (this.x <= 0)) {
+        this.xDir = -this.xDir;
+    }
+    //check to see if the ball is colliding with the top of the screen
+    else if(this.y <= 0) {
+        this.yDir = round(random(1,3));
+    }
+    
+};
+
+//function to draw the bullets to the screen
+//also handles movement of the bullets accross the screen
+bulletObj.prototype.draw = function() {
+    fill(0, 255, 255);
+    ellipse(this.x, this.y, 4, 8);
+    
+    this.y -= 6;
+    if(this.y < 0) {
+        this.fired = false;
+    }
+};
+
+//handles drawing the star map to the screen for background visuals
+starMapObj.prototype.draw = function() {
+    fill(68,85,90);
+    ellipse(this.x, this.y, 5, 5);
+    this.y += 0.2;
+    
+    if(this.y > 400) {
+        this.y = 0;
+    }
+};
+
+//handles drawing the disk map tot he screen for background visuals
+diskMapObj.prototype.draw = function() {
+    fill(246, 255, 117);
+    ellipse(this.x, this.y, this.width, this.height);
+    fill(0, 255, 0);
+    ellipse(this.x, this.y-5, 3, 6);
+    this.y+=0.4;
+    this.x-=0.4;
+    this.width+=this.addVal;
+    this.height-=this.addVal;
+    
+    if((this.x < 0) || (this.y > 400)) {
+        this.x = 400 + random(50, 100);
+        this.y = 0 - random(50, 100);
+    }
+    
+    if((this.width > 18) || this.height < 12) {
+        this.addVal=this.addVal*-1;
+    }
+    if((this.width < 12) || (this.height > 18)) {
+        this.addVal = this.addVal*-1;
+    }
+};
+
+//------- Collision handling-------//
+
+//handles collision checking between the ball and any types of fruits on the screen
+ballObj.prototype.checkCollision = function() {
+    var self = this;
+    
+    //function that takes in a brick and checks to see if it got hit or not by the ball
+    var checkCollisionWithBrick = function(brick) {
+        
+        var collision = false;
+        
+        //top side of ball collision with bottom side of brick
+        if((self.x+10 > brick.x-16) && (self.x < brick.x+16) && (self.y <= brick.y+16) &&               (self.y > brick.y-16) && (self.yDir < 0)) {
+            collision = true;
+            self.yDir = -self.yDir;
+        }
+        //left side of ball collision with right side of brick
+        else if((self.x <= brick.x+16) && (self.x > brick.x-16) && (self.y > brick.y-16) &&                 (self.y+10 < brick.y+16) && (self.xDir < 0)) {
+            collision = true;
+            self.xDir = -self.xDir;
+        }
+         //right side of ball collision with left side of brick
+        else if((self.x+10 >= brick.x-16) && (self.x+10 < brick.x+16) && (self.y > brick.y                  -16) && (self.y+10 < brick.y+16) && (self.xDir > 0)) {
+            collision = true;
+            self.xDir = -self.xDir;
+        }
+        //bottom side of ball collision with top side of brick
+        if((self.x+10 > brick.x-16) && (self.x < brick.x+16) && (self.y+10 < brick.y+16) &&             (self.y+10 >= brick.y-16) && (self.yDir > 0)) {
+            collision = true;
+            self.yDir = -self.yDir;
+        }
+        return(collision);
+    };
+    
+    //check for collisions by callign the function above and passing in the bricks
+    var i = 0;
+    var hitABrick = false;
+        
+    while((i < bricks.length) && (hitABrick === false)) {
+            
+        if((bricks[i].destroyed === false)) {
+                
+            if(checkCollisionWithBrick(bricks[i])) {
+                    
+                bricks[i].hit = true;
+                hitABrick = true;
+                //score++;  //will add in score later once the player destroys and enchanted
+            }
+        }
+        i++;
+    }
+};
+
+//handles collisions between the bullets on the screen and the enchanted fruits
+bulletObj.prototype.bulletCheckCollision = function() {
+    var self = this;
+    
+    var i = 0;
+    var hitABrick = false;
+    
+    //collision checking loops for the bullets ont he screen
+    while((hitABrick === false) && (i < bricks.length)) {
+        if(bricks[i].hit === true && bricks[i].destroyed === false) {
+            if((self.y < bricks[i].y+16) && (self.y > bricks[i].y-16) && (self.x > bricks[i].x-16) && (self.x < bricks[i].x+16)) {
+                score++;
+                bricks[i].destroyed = true;
+                self.fired = false;
+            }
+        }
+        i++;
+    }
+    
+};
+
+
+//-------Key pressed based functions-------//
+
+//determines the value for if a key was pressed will be 1
+var keyPressed = function() {
+    keyArray[keyCode] = 1;
+};
+
+//determines the value for if a key was released will be 0
+var keyReleased = function() {
+    keyArray[keyCode] = 0;
+};
+
+//determines if the spacebar was pressed and when the bullet should be fired on screen
+var checkFire = function() {
+    if(keyArray[32] === 1) {
+        if(currentFrameCount < (frameCount - 7)) {
+            currentFrameCount = frameCount;
+            bullets[bulletIndex].fired = true;
+            bullets[bulletIndex].x = paddle.x + 30;
+            bullets[bulletIndex].y = 350;
+            bulletIndex++;
+            if(bulletIndex > 5) {
+                bulletIndex = 0;
+            }
+        }
+        
+    }
+};
+
+//checls to see ift he user clicked the screen with the mouse to start the game
+var checkGameStart = function() {
+    //might want to use a different key like mouse click or something
+    if(mouseIsPressed) {
+        gameStart = true;
+    }
+    
+};
+
+
+//-------Main game loop (draw) function-------//
+
+//called over and over to run the game in a loop
+var draw = function() {
+    
+    //this if statement handles the instructions screen graphics
+    if(gameStart === false) {
+        background(0,0,0);
+        
+        //draw star map
+        for(var i = 0; i < 50; i++) {
+            starMap[i].draw();
+        }
+        
+        //draw squishy lemons
+        for(var i = 0; i < 10; i++) {
+            diskMap[i].draw();
+        }
+        
+        //show isntruction screen
+        textFont(createFont("sens-serif"));
+        fill(255, 122, 0);
+        textSize(30);
+        text("Enchanted Fruits Pong", 50, 40);
+        fill(255, 255, 255);
+        textSize(20);
+        text("How To Play", 52, 80);
+        textSize(15);
+        text("You are a small spaceship heading towards a \ndeadly wall of magical space fruits!", 52, 100);
+        text("You must destroy 20 fruits to win the game.", 52, 135);
+        text("To destroy a fruit you must first hit it with the ball \nthat is bouncing around the screen. Once hit with \nthe ball, the fruit will become ENCHANTED and will \nbegin moving towards the bottom of the screen! \nYou must shoot enchanted fruits before they reach \nthe bottom to destroy them!\nWatch out though...if your spaceship is touched by \nan enchanted fruit OR if the bouncing ball gets past\nyour spaceship then its GAME OVER!\n(p.s. don't mind the squishy lemons that fly by!)", 52, 153);
+        
+        textSize(20);
+        text("Controls", 52, 330);
+        textSize(15);
+        text("Move Spaceship = drag mouse left or right", 52, 350);
+        text("Shoot = space bar (only 6 shots at a time!)", 52, 370);
+        
+        if(((frameCount % 50) !== 0) && ((frameCount % 50) !== 1) && ((frameCount % 50) !==             2)) {
+            textSize(13);
+            text("click anywhere on the game screen to start!", 73, 390);
+        }
+        
+        //check to see if the game has started yet
+        checkGameStart();
+    }
+    
+    //if the game has started
+    else {
+        //if the player has not won or lost yet (normal gameplay)
+        if((gameOver === false) && (youWin === false)) {
+            background(0, 0, 0);
+            
+            //draw star map
+            for(var i = 0; i < 50; i++) {
+                starMap[i].draw();
+            }
+            
+            //draw squichy lemons
+            for(var i = 0; i < 10; i++) {
+                diskMap[i].draw();
+            }
+            
+            //draw the normal fruits
+            for(var i = 0; i < bricks.length; i++) {
+                if(bricks[i].hit === false) {
+                    bricks[i].draw();
+                }
+                //draw the enchanted fruits
+                else if(bricks[i].hit === true && bricks[i].destroyed === false) {
+                    bricks[i].drawEnchanted();
+                    
+                }
+            }
+            
+            //draw the ball
+            ball.draw();
+            //check for ball collisions
+            ball.checkCollision();
+            
+            //draw the paddle
+            paddle.draw();
+            
+            //check to see if the player has fired a bullet
+            checkFire();
+            
+            //draw the bullets to the screen that have been fired
+            for(var i = 0; i < 6; i++) {
+                if(bullets[i].fired === true) {
+                    bullets[i].draw();
+                    bullets[i].bulletCheckCollision();
+                }
+            }
+            
+            fill(255, 122, 0);
+            textSize(20);
+            text(score, 370, 390);
+            
+            //once the player reaches a score of 20, they win
+            if(score === 20) {
+                youWin = true;
+            }
+        }
+        //if the player encounters a game over condition
+        else if (gameOver === true){
+            fill(255, 122, 0);
+            textSize(40);
+            text("Game Over", 100, 200);
+        }
+        //if the player has won the game
+        else if(youWin === true) {
+            fill(255, 122, 0);
+            textSize(40);
+            text("You Win!", 130, 200); 
+            
+            //draw some fancy animation for winning
+        }
+    }
+};
+
+
+

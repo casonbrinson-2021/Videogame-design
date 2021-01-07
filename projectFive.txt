@@ -1,0 +1,456 @@
+/* 
+ * projectFive.txt
+ * 
+ * Author: Gregory Cason Brinson
+ * Assignment: Project 5 - Heads Up Dodgeball
+ * Created: 10/06/20
+ * Last Edited: 10/09/20
+ * Honor Code: "I did not break the honor code on this assignment" - Gregory Cason Brinson
+*/ 
+
+//setting the angle mode and defining pi for use int he program with rotations
+angleMode = "radians";
+var pi = Math.PI;
+
+
+//-------Creating the objects used in the game-------//
+//creating cannon that the player will control
+var cannonObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.rotateAngle = 0;
+};
+
+//ball object that will be shot from the cannon
+var ballObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.state = 0;     //rising = 0, falling = 1
+    this.moveSpeed = 20.0;
+    this.constant = 20.0;
+    this.reductionFactor = 0.0;
+    this.gravity = 0.5;
+    this.rotateAngle = 0;
+    this.drawMe = false;
+    this.bounceCounter = 0;
+    this.multFactor = 1;
+};
+
+//bird object that will be shot at
+var birdObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.state = 0;         //0 = moving towards target, 1 = avoiding ball
+    this.rotateAngle = 0;
+    this.moveSpeed = 0.75;
+    this.evadeSpeed = 5;
+    this.hit = 0;       //if this.hit > 1 then the bird is killed and should be removed
+    
+    this.targetX = -30;
+    this.targetY = y;
+    
+    this.whisker1 = new PVector(-30, -30);
+    this.whisker2 = new PVector(-30, 30);
+    this.whisker3 = new PVector(30, 30);
+    this.whisker4 = new PVector(30, -30);
+    
+    this.avoidAngle = 0;
+};
+
+
+
+//-------Initializing game objects and variables-------//
+var gameStart = false;                       //starts the game when true
+var youWin = false;                          //keeps track of if the player has won
+var gameOver = false;                        //keeps track of if the player has lost
+var keyArray = [];                           //creates the keyArry for key presses
+var currFrame = 0;                           //holds the current frame
+var firedFrame = 0;                          //holds the frame that the last ball was fired
+var score = 0;                               //keeps track of the score of the game
+var alphaVal = 0;                          //keeps track of the alpha value for game over
+
+//game objects
+var cannon = new cannonObj(50, 400);
+var ballArray = [];
+for(var i = 0; i < 20; i++) {
+    ballArray.push(new ballObj(50, 400));
+}
+var ballIndex = 0;
+
+var birdArray = [];
+birdArray.push(new birdObj(430, 50));
+birdArray.push(new birdObj(440, 120));
+birdArray.push(new birdObj(450, 190));
+birdArray.push(new birdObj(440, 260));
+
+
+//-------Draw functions for each object-------//
+//hanldes the cannon Obj graphics
+cannonObj.prototype.draw = function() {
+    pushMatrix();
+    translate(this.x, this.y);
+    rotate(this.rotateAngle);
+    
+    stroke(0,0,0);
+    fill(0,0,0);
+    rect(-15, -75, 30, 50);
+    fill(255,50,0);
+    ellipse(0,0,100,100);
+    
+    popMatrix();
+};
+
+
+//handles the ball object graphics
+ballObj.prototype.draw = function() {
+    pushMatrix();
+    translate(this.x, this.y);
+    rotate(this.rotateAngle);
+    
+    stroke(0,0,0);
+    fill(169,169,169);
+    ellipse(0, 0, 30, 30);
+    
+    popMatrix();
+};
+
+
+//handles the bird object graphics
+birdObj.prototype.draw = function() {
+    
+    if(this.hit === 0) {
+        pushMatrix();
+        
+        translate(this.x, this.y);
+        rotate(this.rotateAngle);
+        
+        stroke(0,0,0);
+        fill(190,190,190);
+        ellipse(7-15,14-15,5,20);
+        ellipse(18-15,21-15,28,13);
+        fill(220,220,220);
+        triangle(7-15,21-15,24-15,19-15,25-15,29-15);
+        fill(190,190,190);
+        ellipse(4-15,6-15,10,8);
+        ellipse(2-15,5-15,2,2);
+        fill(255,100,0);
+        triangle(-1-15,4-15,-1-15,8-15,-6-15,6.5-15);
+    
+        popMatrix();
+    }
+    else {
+        pushMatrix();
+        
+        translate(this.x, this.y);
+        rotate(this.rotateAngle);
+        
+        stroke(0,0,0);
+        fill(148, 232, 200);
+        ellipse(7-15,14-15,5,20);
+        ellipse(18-15,21-15,28,13);
+        fill(11, 112, 73);
+        triangle(7-15,21-15,24-15,19-15,25-15,29-15);
+        fill(87, 129, 181);
+        ellipse(4-15,6-15,10,8);
+        ellipse(2-15,5-15,2,2);
+        fill(255,100,0);
+        triangle(-1-15,4-15,-1-15,8-15,-6-15,6.5-15);
+    
+        popMatrix();
+    }
+};
+
+
+
+//-------handles movement of the game objects on the screen-------//
+//handles moving the cannon by rotating it to the left or right
+cannonObj.prototype.move = function() {
+     if(keyArray[RIGHT] === 1) {
+        if(this.rotateAngle <= (78*(pi/180))) {
+            this.rotateAngle+=2*(pi/180);
+        }
+    }
+    if(keyArray[LEFT] === 1) {
+        if(this.rotateAngle >= (-30*(pi/180))) {
+            this.rotateAngle-=2*(pi/180);
+        }
+    }
+};
+
+//handles moving the ball object when it is fired
+ballObj.prototype.move = function() {
+    var self = this;
+    text(self.bounceCounter, 200,200);
+    
+    var yMove = sin(self.rotateAngle-(pi/2))*self.moveSpeed;
+    var xMove = cos(self.rotateAngle-(pi/2))*self.constant;
+    
+    if(self.y > 375) {
+        self.moveSpeed = self.constant - self.reductionFactor;
+        self.reductionFactor+=0.5;
+        self.bounceCounter++;
+    }
+    if(self.x+15 > 400) {
+        self.multFactor*=-1;
+    }
+    if(self.x-15 < 0) {
+        self.multFactor*=-1;
+    }
+    
+    self.x+=self.multFactor*xMove;
+    self.y+=yMove;
+    self.moveSpeed-=self.gravity;
+    
+    if(yMove > 0) {
+        self.state = 1;
+    }
+    else {
+        self.state = 0;
+    }
+
+    if(self.bounceCounter > 8){
+        self.drawMe = false;
+    }
+    
+    
+    
+};
+
+//handles moving the bird object accross the screen and avoids balls
+birdObj.prototype.move = function() {
+
+    var self = this;
+    
+    //endpoints of the whiskers
+    var point1 = new PVector(self.x-30, self.y-30);
+    var point2 = new PVector(self.x-30, self.y+30);
+    var point3 = new PVector(self.x+30, self.y+30);
+    var point4 = new PVector(self.x+30, self.y-30);
+    
+    
+    if(self.state === 0) {
+        self.x-=this.moveSpeed;
+        
+        if(self.y > self.targetY) {
+            self.y--;
+        }
+        if(self.y < self.targetY) {
+            self.y++;
+        }
+        
+        for(var i = 0; i < ballArray.length; i++) {
+            if(ballArray[i].drawMe) {
+                var dist1 = dist(point1.x,point1.y,ballArray[i].x, ballArray[i].y);
+                var dist2 = dist(point2.x,point2.y,ballArray[i].x, ballArray[i].y);
+                var dist3 = dist(point3.x,point3.y,ballArray[i].x, ballArray[i].y);
+                var dist4 = dist(point4.x,point4.y,ballArray[i].x, ballArray[i].y);
+            
+                if(dist1 < 50) {
+                    self.state = 1;
+                    if(ballArray[i].state === 1) {
+                        self.avoidAngle = 0;
+                    }
+                    else {
+                        self.avoidAngle = pi/4;
+                    }
+                }
+                else if(dist2 < 50) {
+                    self.state = 1;
+                    if(ballArray[i].state === 1) {
+                        self.avoidAngle = 7*pi/4;
+                    }
+                    else {
+                        self.avoidAngle = 7*pi/4;
+                    }
+                }
+                else if(dist3 < 50) {
+                    self.state = 1;
+                    if(ballArray[i].state === 1) {
+                        self.avoidAngle = pi;
+                    }
+                    else {
+                        self.avoidAngle = 5*pi/4;
+                    }
+                }
+                else if(dist4 < 50) {
+                    self.state = 1;
+                    if(ballArray[i].state === 1) {
+                        self.avoidAngle = pi;
+                    }
+                    else {
+                        self.avoidAngle = 5*pi/4;
+                    }
+                }
+            }
+        }
+    }
+    if(self.state === 1) {
+        self.x+=cos(self.avoidAngle)*self.evadeSpeed;
+        self.y+=sin(self.avoidAngle)*self.evadeSpeed;
+        self.state = 0;
+    }
+    
+    if(self.x-15 < 0) { 
+        gameOver = true;
+    }
+    
+};
+
+
+
+//-------Handles collision detection-------//
+//collison detection for the ball (basically handles all in game collisons)
+ballObj.prototype.checkCollisions = function() {
+    var self = this;
+    
+    for(var i = 0; i < birdArray.length; i++) {
+        if((self.y+15 > birdArray[i].y-15) && (self.y-15 < birdArray[i].y+15) && (self.x+15 > birdArray[i].x-15) && (self.x-15 < birdArray[i].x+15) && (birdArray[i].hit < 2)) {
+            self.drawMe = false;
+            birdArray[i].hit++;
+            if(birdArray[i].hit > 1) {
+                score++;
+            }
+        }
+    }
+
+};
+
+
+//-------Code to handle key pressing/releasing and mouse clicking-------//
+var keyPressed = function() {
+    keyArray[keyCode] = 1;
+};
+
+var keyReleased = function() {
+   keyArray[keyCode] = 0;
+};
+
+//handles the mouse stuff to start the game if the mouse is clicked
+var mouseClicked = function() {
+    gameStart = true;
+};
+
+
+//function that checks if the spacebar is pressed and fires a ball
+var checkFire = function() {
+    if(keyArray[32] === 1) {
+        firedFrame = currFrame;
+        ballArray[ballIndex].drawMe = true;
+        ballArray[ballIndex].x = 50;
+        ballArray[ballIndex].y = 400;
+        ballArray[ballIndex].moveSpeed = 20.0;
+        ballArray[ballIndex].reductionFactor = 0.0;
+        ballArray[ballIndex].rotateAngle = cannon.rotateAngle;
+        ballIndex++;
+    }
+};
+
+
+
+//-------Game loop-------//
+var draw = function() {
+    //instruction screen
+    if(gameStart === false) {
+        background(255,255,255);
+        fill(255,50,0);
+        textSize(35);
+        text("Heads Up Dodgeball!", 35,35);
+        
+        fill(0,0,0);
+        textSize(14);
+        text("You control a cannon on the bottom left of the screen. Your\ngoal is to shoot down all 4 birds that are flying by. the birds\nwill try to evade your shots though! You must hit a bird \ntwice to kill it. If you hit a bird once, it will change colors so\nthat you know you hit it.", 35, 65);
+        fill(255,50,0);
+        textSize(35);
+        text("Controls", 35,200);
+        fill(0,0,0);
+        textSize(18);
+        text("move cannon left   = LEFT ARROW\nmove cannon right = RIGHT ARROW\nshoot = Space Bar", 35, 235);
+        
+        fill(255,50,0);
+        textSize(14);
+        text("click screen to start", 120, 360);
+        
+    }
+    
+    //actual game
+    if (gameStart) {
+        //main game stuff
+        if((gameOver === false) && (youWin === false)) {
+            background(0,200,255);
+            //draw clouds in
+            noStroke();
+            fill(255,255,255);
+            ellipse(50,150,40,50);
+            ellipse(75,150,80,50);
+            ellipse(75,175,60,50);
+            
+            ellipse(150,50,50,50);
+            ellipse(180,50,50,50);
+            
+            ellipse(280,50,70,50);
+            ellipse(295,50,30,50);
+            ellipse(295,75,80,50);
+            currFrame++;        //increment to keep track of the frames
+            
+            if(score > 3) {
+                youWin = true;
+            }
+            
+            
+            //draw objects to the screen
+            //only check for fire if a second has passed since the last time you fired
+            if(((currFrame - firedFrame) > 60) || (firedFrame === 0)) {
+                checkFire();
+            }
+            for(var i = 0; i < ballArray.length; i++) {
+                if(ballArray[i].drawMe) {
+                    ballArray[i].draw();
+                    ballArray[i].move();
+                    ballArray[i].checkCollisions();
+                }
+            }
+            if(ballIndex > 19) {
+                ballIndex = 0;
+            }
+
+            cannon.draw();
+            cannon.move();
+            
+            for(var i = 0; i < 4; i++) {
+                if(birdArray[i].hit < 2) {
+                    birdArray[i].draw();
+                    birdArray[i].move();
+                }
+            }
+        }
+        
+        //the player loses
+        else if(gameOver) {
+            background(255,50,0, alphaVal);
+            alphaVal+=1;
+            fill(255,255,255);
+            textSize(50);
+            text("GAME OVER", 50,210);
+            textSize(30);
+            text("Score: ", 130, 250);
+            text(score, 230, 250);
+        }
+        
+        //the player wins
+        else if(youWin) {
+            background(255,255,255);
+            
+            var r = random(10,255);
+            var g = random(10,255);
+            var b = random(10,255);
+            
+            fill(r,g,b);
+            textSize(50);
+            text("YOU WIN!", 80, 210);
+            textSize(20);
+            fill(0,0,0);
+        }
+        
+        
+    }
+};

@@ -1,0 +1,484 @@
+/* 
+ * projectTwo.txt
+ * 
+ * Author: Gregory Cason Brinson
+ * Assignment: Project 2 - Simple Tilemap Game
+ * Created: 9/15/20
+ * Last Edited: 9/17/20
+ * Honor Code: "I did not break the honor code on this assignment" -Cason Brinson
+*/ 
+
+
+//-------Creating the Tilemap-------//
+var tilemap = [
+        "                    ",
+        "     e    f  e     f",
+        "   w                ",
+        " fw                 ",
+        " w            f    f",
+        "w              wwwww",
+        "                    ",
+        " f               f w",
+        "     f       f    w ",
+        "                 w  ",
+        "                w  f",
+        " e   f       f w    ",
+        "                    ",
+        "             e     f",
+        "                    ",
+        "                    ",
+        " f  fwww f e       f",
+        "    w               ",
+        "    w  f            ",
+        "    w        f     f"];
+
+
+//-------Creating the objects for the game-------//
+
+//creating the fruit object
+var fruitObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.drawMe = true;
+    this.checkCollisions = true;
+};
+
+//creating the wall object
+var wallObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    
+};
+
+//cerating the enemy object
+var enemyObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.moveSpeed = 1;
+    
+};
+
+//creating the player object
+var playerObj = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.moveSpeed = 1.5;
+};
+
+
+//-------initializing the objects for the game-------//
+var images = [];                    //holds the custom image for the walls
+var fruits = [];                    //holds all the fruits when we initialize them        
+var walls = [];                     //holds all the walls when we initialize them
+var enemies = [];                   //holds all the enemies when we initialize them
+var player = new playerObj(2*20,19*20);     //creates a player object at starting location
+var keyArray = [];                          //creates the keyArrya for key presses
+var gameOver = false;                       //game over variable
+var youWin = false;                         //win variable
+var score = 0;                              //keeps track of the score
+var gameStart = false;                      //keeps track of when the game starts
+
+var transparency = 1;                       //transparency for Game Over and win background
+var enemyTrans = 1;                         //transparency for enemies at Game Over screen
+var fruitTrans = 1;                         //transparency for fruits at Win screen
+
+
+//-------All the draw functions for the objects-------//
+
+//handles drawing the fruits
+fruitObj.prototype.draw = function() {
+    fill(255, 122, 0);
+    ellipse(this.x, this.y, 20, 19);
+    fill(0,255,0);
+    ellipse(this.x+2,this.y-8,8,4);
+};
+
+//handles drawing the walls
+wallObj.prototype.draw = function() {
+    //gets image I captured from the canvas at the beginning of the program (custom image)
+    image(images[0],this.x,this.y,20,20);
+};
+
+//handles drawing the enemy objects
+enemyObj.prototype.draw = function() {
+     fill(255,0,0);
+     ellipse(this.x, this.y, 20, 20);
+     fill(0,0,0);
+     ellipse(this.x+5, this.y-3,4,4);
+     rect(this.x-5, this.y, 10, 3);
+     ellipse(this.x-5, this.y-3, 4, 4); 
+     rect(this.x-7, this.y-7,6,2);
+     rect(this.x+1, this.y-7,6,2);
+     rect(this.x+8, this.y, 2, 6);
+     rect(this.x-10, this.y, 2,6);
+     rect(this.x+4, this.y+4,2,6);
+     rect(this.x-6, this.y+4,2,6);
+};
+
+//handles drawing the player obejct to the screen
+playerObj.prototype.draw = function() {
+    fill(0,0,255);
+    //ellipse(this.x, this.y, 20, 20);
+    
+    noStroke();
+    fill(0,0,0);
+    rect(this.x+4,this.y+0,4,8);
+    rect(this.x+12,this.y+0,4,8);
+    fill(0,0,255);
+    rect(this.x+0,this.y+0,20,2);
+    fill(0,0,255);
+    rect(this.x+1,this.y+8,18,12);
+    fill(0,0,0);
+    rect(this.x+0,this.y+8,3,4);
+    rect(this.x+0,this.y+16,3,4);
+    rect(this.x+17,this.y+8,3,4);
+    rect(this.x+17,this.y+16,3,4);
+};
+
+//handles moving the player obejct based on key presses by the user
+//also handles all player collisions with walls, fruits, and enemies
+playerObj.prototype.move = function() {
+    //up arrow
+    if(keyArray[UP] === 1) {
+        this.y-=this.moveSpeed;
+    }
+    //down arrow
+    if(keyArray[DOWN] === 1) {
+        this.y+=this.moveSpeed;
+    }
+    //left arrow
+    if(keyArray[LEFT] === 1) {
+        this.x-=this.moveSpeed;
+    }
+    //right arrow
+    if(keyArray[RIGHT] === 1) {
+        this.x+=this.moveSpeed;
+    }
+    
+    //wall collission detection
+    if((this.x) < 0) {
+        this.x+=this.moveSpeed;
+    }
+    if((this.x+20) > 400) {
+        this.x-=this.moveSpeed;
+    }
+    if((this.y) < 0) {
+        this.y+=this.moveSpeed;
+    }
+    if((this.y+20) > 400) {
+        this.y-=this.moveSpeed;
+    }
+    for(var i = 0; i < walls.length; i++) {
+        if((this.y+20 > walls[i].y) && (this.y < walls[i].y+20) && (this.x+20 > walls[i]             .x) && (this.x < walls[i].x+20)) {
+            if((keyArray[UP] === 1)) {
+                this.y+=15;
+            }
+            if((keyArray[DOWN] === 1)) {
+                this.y-=15;
+
+            }
+            if((keyArray[LEFT] === 1)) {
+                this.x+=15;
+
+            }
+            if((keyArray[RIGHT] === 1)) {
+                this.x-=15;
+
+            }
+        }
+    }
+    
+    //handles collision of player and fruits
+    for(var i = 0; i < fruits.length; i++) {
+        if((this.y+20 > fruits[i].y-10) && (this.y < fruits[i].y+10) && (this.x+20 >                 fruits[i].x-10) && (this.x < fruits[i].x+10) && (fruits[i].checkCollisions)){
+            fruits[i].drawMe = false;
+            fruits[i].checkCollisions = false;
+            score++;
+        }
+    }
+    
+    //handles collision of playe and enemies
+    for(var i = 0; i < enemies.length; i++) {
+        if((this.y+20 > enemies[i].y-10) && (this.y < enemies[i].y+10) && (this.x+20 >                 enemies[i].x-10) && (this.x < enemies[i].x+10)) {
+            gameOver = true;
+        }
+    }
+};
+
+//handles enemy movement up and down
+//also handles collision detection with walls
+enemyObj.prototype.moveUpDown = function() {
+    this.y+=this.moveSpeed;
+    if(this.y-10 < 0) {
+        this.moveSpeed = -this.moveSpeed;
+    }
+    if(this.y+10 > 400) {
+        this.moveSpeed = -this.moveSpeed;
+    }
+    //collision checking
+    for(var i = 0; i < walls.length; i++) {
+        if((this.y+10 > walls[i].y) && (this.y-10 < walls[i].y+20) && (this.x+10 > walls[i].x) && (this.x-10 < walls[i].x+20)) {
+            this.moveSpeed = -this.moveSpeed;
+        }
+    }
+};
+
+//handles enemy movement left and right
+//also handles collision detection with walls
+enemyObj.prototype.moveLeftRight = function() {
+    this.x+=this.moveSpeed;
+    if(this.x-10 < 0) {
+        this.moveSpeed = -this.moveSpeed;
+    }
+    if(this.x+10 > 400) {
+        this.moveSpeed = -this.moveSpeed;
+    }
+
+    //collision checking with walls
+    for(var i = 0; i < walls.length; i++) {
+        if((this.y+10 > walls[i].y) && (this.y-10 < walls[i].y+20) && (this.x+10 > walls[i].x) && (this.x-10 < walls[i].x+20)) {
+            this.moveSpeed = -this.moveSpeed;
+        }
+    }
+    
+};
+
+
+//-------Game over animations to make the game cool looking--------//
+
+//handles how the enemies will move whent he game is over
+enemyObj.prototype.gameOverMovement = function() {
+    this.y+=this.moveSpeed;
+    if(this.y-10 < 0) {
+        this.moveSpeed = -this.moveSpeed;
+    }
+    if(this.y+10 > 400) {
+        this.moveSpeed = -this.moveSpeed;
+    }
+};
+
+//handles where the enemies will be drawn after the game is over
+enemyObj.prototype.gameOverDraw = function() {
+     fill(255,0,0, enemyTrans);
+     ellipse(this.x, this.y, 20, 20);
+     fill(0,0,0, enemyTrans);
+     ellipse(this.x+5, this.y-3,4,4);
+     rect(this.x-5, this.y, 10, 3);
+     ellipse(this.x-5, this.y-3, 4, 4); 
+     rect(this.x-7, this.y-7,6,2);
+     rect(this.x+1, this.y-7,6,2);
+     rect(this.x+8, this.y, 2, 6);
+     rect(this.x-10, this.y, 2,6);
+     rect(this.x+4, this.y+4,2,6);
+     rect(this.x-6, this.y+4,2,6);
+};
+
+
+//handles drawing the fruits after the game has been won
+fruitObj.prototype.gameOverDraw = function() {
+    fill(255, 122, 0, fruitTrans);
+    ellipse(this.x, this.y, 20, 19);
+    fill(0,255,0, fruitTrans);
+    ellipse(this.x+2,this.y-8,8,4);
+};
+
+
+//-------initializing functions-------//
+
+//initialize the custom image for the walls
+var initImages = function() {
+    fill(138, 137, 128);
+    noStroke();
+
+    rect(0,0,400,200);
+    rect(0,200,400,400);
+    fill(0,0,0);
+    rect(0,0,400,10);
+    rect(0,180,400,20);
+    rect(190,200,10,200);
+    rect(0,0,10,200);
+    rect(390,0,10,200);
+    rect(0,390,400,10);
+    
+    images.push(get(0,0,width,height));
+    background(255,255,255);
+};
+
+//initialize the tilemap for gameplay
+var initTilemap = function() {
+    for (var i = 0; i< tilemap.length; i++) {
+        for (var j =0; j < tilemap[i].length; j++) {
+            switch (tilemap[i][j]) {
+                case 'f': fruits.push(new fruitObj(j*20, i*20));
+                    break;
+                case 'w': walls.push(new wallObj(j*20, i*20));
+                    break;
+                case 'e': enemies.push(new enemyObj(j*20, i*20));
+                
+                    break;
+            }
+        }
+    }
+};
+
+//initialize tilemap to set up the playing field
+initImages();
+initTilemap();
+
+
+//-------handle key presses-------//
+
+//determines the value for if a key was pressed will be 1
+var keyPressed = function() {
+    keyArray[keyCode] = 1;
+};
+
+//determines the value for if a key was released will be 0
+var keyReleased = function() {
+    keyArray[keyCode] = 0;
+};
+
+
+//-------main draw loop of the game-------//
+
+//main draw loop that runs over and over
+var draw = function() {
+    if(gameStart === false) {
+        background(200, 200, 200);
+        
+        //instructions text
+        fill(0,255,0);
+        textSize(50);
+        text("Fruit Rescuer!", 40, 80);
+        textSize(30);
+        fill(255, 122, 0);
+        text("How To Play", 40, 130);
+        textSize(20);
+        text("You are a Fruit Rescuer trying to rescue \nfruits from evil from fruit eaters! You \nmust collect all 20 fruits to win! Watch \n out for the guards, if they catch you \nthen its Game Over!",40,150);
+        
+        textSize(30);
+        text("Controls", 40, 290);
+        textSize(20);
+        text("Move = arrow keys", 40, 310);
+        
+        if(((frameCount % 50) !== 0) && ((frameCount % 50) !== 1) && ((frameCount % 50) !==             2)) {
+            fill(0, 255, 0);
+            textSize(18);
+            text("click anywhere on the game screen to start!", 33, 360);
+        }
+        
+        //starts the game if the user click the screen
+        if(mouseIsPressed) {
+            gameStart = true;
+        }
+    }
+    
+    //starts the game if the game start variable is true
+    else if(gameStart === true) {
+        if((gameOver === false) && (youWin === false)) {
+            background(200, 200, 200);
+            for (var i = 0; i < fruits.length; i++) {
+                if(fruits[i].drawMe) {
+                    fruits[i].draw();
+                }
+            }
+            for (i = 0; i < walls.length; i++) {
+                walls[i].draw();
+            }
+            for (i = 0; i < enemies.length; i++) {
+                enemies[i].draw();
+                if(i === 0) {
+                    enemies[i].moveUpDown();
+                }
+                else if(i === 1) {
+                    enemies[i].moveLeftRight();
+                }
+                else if(i === 2) {
+                    enemies[i].moveLeftRight();
+                }
+                else if(i === 3) {
+                    enemies[i].moveUpDown();
+                }
+                else if(i === 4) {
+                    enemies[i].moveLeftRight();
+                }
+                
+            }
+            
+            //draw and move the player
+            player.draw();
+            player.move();
+            
+            //determine if the palyer has won
+            //reason its set at 21 is so the normal game will run one more time 
+            //to get rid of the last fruit 
+            if(score === 21) {
+                youWin = true;
+            }
+            if(score === 20) {
+                score++;
+            }
+        }
+        
+        //handle what happens after the game is over
+        //basically fades in background, says Game Over, says score, and fades in bad guys 
+        else if(gameOver) {
+            background(0,0,0,transparency);
+            if(transparency < 255) {
+                transparency+=1.5;
+            }
+            
+            if(transparency > 80) {
+                fill(255,255,255);
+                textSize(60);
+                text("Game Over", 50,200);
+            }
+            if(transparency > 140) {
+                textSize(20);
+                text("Score: ", 160, 260);
+                text(score, 225,260);
+            }
+            if(transparency > 250) {
+                for(var i = 0; i < enemies.length; i++) {
+                    enemies[i].gameOverDraw();
+                    enemies[i].gameOverMovement();
+                    enemyTrans+=0.5;
+                }
+            }
+        }
+        
+        //handles what happens after the user has won the game
+        //basically fades in a background, says you win, gives score, and fades in fruits
+        else if(youWin) {
+            background(255, 255, 255,transparency);
+            if((transparency < 255)) {
+                transparency+=3;
+            }
+            if(transparency > 100) {
+                fill(0, 255, 255);
+                textSize(60);
+                text("You Win!", 80, 200);
+            }
+            if(transparency > 180) {
+                fill(0, 255, 255);
+                textSize(20);
+                text("Score: ", 150,240);
+                text(score, 215, 240);
+            }
+            if(transparency > 250) {
+                for(var i = 0; i < fruits.length; i++) {
+                    fruits[i].gameOverDraw();
+                    
+                }
+                fruitTrans+=1;
+            }
+        }
+    }
+};
+
+
+
+
+
+
+
