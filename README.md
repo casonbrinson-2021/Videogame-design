@@ -13,6 +13,7 @@ All code for these games was written using Khan Academy's Javascript IDE as per 
 
 -Download the .txt file you wish to run 
 -copy and paste all the code in the .txt file into a new project on code academy's Javascript IDE
+  (Link to a new program in Khan Academy https://www.khanacademy.org/computer-programming/new/pjs)
 -Enjoy the game :)
 
 
