@@ -6,6 +6,20 @@ A collection of video game projects for Video Game Design course at Virginia Tec
 
 All files listed in this repository were developed by myself alone.
 
+All code for these games was written using Khan Academy's Javascript IDE as per the course requirements.
+
+
+# How to Run
+
+-Download the .txt file you wish to run 
+-copy and paste all the code in the .txt file into a new project on code academy's Javascript IDE
+-Enjoy the game :)
+
+
+# Projects of Note
+
+#
+
 
 
 
