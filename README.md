@@ -24,10 +24,22 @@ All code for these games was written using Khan Academy's Javascript IDE per the
 
 #### Final Project
 
+##### Title Screen
+-Shows some animation
 <img src="https://github.com/casonbrinson-2021/Videogame-design/blob/main/images/VG1.PNG" width="200"/>
+
+##### Instruction Screen
 <img src="https://github.com/casonbrinson-2021/Videogame-design/blob/main/images/VG2.PNG" width="200"/>
+
+##### Initial Level Start Screen
 <img src="https://github.com/casonbrinson-2021/Videogame-design/blob/main/images/VG3.PNG" width="200"/>
+
+##### Gameplay
+-Gameplay consists of a player character jumping around various moving platforms while avoiding enemies and collecting items
 <img src="https://github.com/casonbrinson-2021/Videogame-design/blob/main/images/VG4.PNG" width="200"/>
+
+##### Game Over Screen
+-Score is shown 
 <img src="https://github.com/casonbrinson-2021/Videogame-design/blob/main/images/VG5.PNG" width="200"/>
 
 
