@@ -41,6 +41,7 @@ All code for these games was written using Khan Academy's Javascript IDE per the
 
 ##### Game Over Screen
 -Score is shown 
+
 <img src="https://github.com/casonbrinson-2021/Videogame-design/blob/main/images/VG5.PNG" width="200"/>
 
 
