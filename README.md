@@ -1,6 +1,6 @@
-### Videogame-design
+# Videogame-design
 
-# About
+### About
 
 A collection of video game projects for Video Game Design course at Virginia Tech.
 
@@ -9,7 +9,7 @@ All files listed in this repository were developed by myself alone.
 All code for these games was written using Khan Academy's Javascript IDE per the course requirements.
 
 
-# How to Run
+### How to Run
 
 -Download the .txt file you wish to run 
 
@@ -20,9 +20,9 @@ All code for these games was written using Khan Academy's Javascript IDE per the
 -Enjoy the game :)
 
 
-# Projects of Note
+### Projects of Note
 
-# Final Project
+#### Final Project
 
 
 
