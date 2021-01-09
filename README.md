@@ -26,6 +26,7 @@ All code for these games was written using Khan Academy's Javascript IDE per the
 
 ##### Title Screen
 -Shows some animation
+
 <img src="https://github.com/casonbrinson-2021/Videogame-design/blob/main/images/VG1.PNG" width="200"/>
 
 ##### Instruction Screen
