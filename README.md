@@ -24,7 +24,7 @@ All code for these games was written using Khan Academy's Javascript IDE per the
 
 #### Final Project
 
-![alt text](https://github.com/casonbrinson-2021/Videogame-design/blob/main/images/VG1.PNG =100x100)
+![alt text](https://github.com/casonbrinson-2021/Videogame-design/blob/main/images/VG1.PNG | width=250)
 
 
 
