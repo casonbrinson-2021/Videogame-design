@@ -23,7 +23,8 @@ All code for these games was written using Khan Academy's Javascript IDE per the
 # Projects of Note
 
 # Final Project
-![GitHub Logo](/'images for github'/VG1.png)
+
+![alt text](https://github.com/[casonbrinson-2021]/[Videogame-design]/blob/[branch]/images for github/VG1.png?raw=true)
 
 
 
